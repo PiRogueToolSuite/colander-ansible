@@ -1,8 +1,8 @@
 <div align="center">
 <img width="60px" src="https://pts-project.org/android-chrome-512x512.png">
-<h1>[Repository name]</h1>
+<h1>Ansible playbooks for Colander</h1>
 <p>
-This repository contains the source code of [description]. 
+A set of Ansible playbook to deploy Colander.
 </p>
 <p>
 License: GPLv3
@@ -14,21 +14,35 @@ License: GPLv3
 </p>
 </div>
 
+## Initial setup of the server 
+Creating a user `colander` on the target server is a requirement.
 
-## How to use this template
+To do so, run the following commands:
+```
+useradd -m colander --shell /bin/bash
+usermod -aG sudo colander
+passwd colander
+```
+and copy your SSH key.
+```
+ssh-copy-id -i ~/.ssh/my-key colander@192.168.122.189
+```
 
-1. Delete all unnecessary folders and files depending on the type of project.
+## Example of usage of the playbooks
+```
+ansible-galaxy role install geerlingguy.docker
+ansible-galaxy collection install community.docker
 
-2. Specify the name of the package (Python and/or Debian) by replacing `[package_name]` in the files:
-* `./setup.py:6`
-* `./setup.py:11`
-* `./debian/rules:3`
-* `./debian/rules:19`
-* `./debian/control:1`
-* `./debian/control:12`
-* `./debian/control:14`
-* `./debian/copyright:2`
-* `./debian/copyright:4`
+# Install Docker on the target
+ansible-playbook -K -i inventory/production/hosts.ini playbooks/docker.yml
 
-3. Specify the description of the package (Python and/or Debian) by replacing `[package_description]` in the file:
-* `./setup.py:10`
+# Generate the configuration template 
+ansible-playbook -i inventory/production/hosts.ini playbooks/configure.yml  
+
+# Encrypt the configuration as a vault
+ansible-vault encrypt playbooks/vault.yml
+
+# Configure Colander server
+ansible-playbook -K -e playbooks/vault.yml -i inventory/production/hosts.ini playbooks/colander_configuration.yml --tags configure
+
+```

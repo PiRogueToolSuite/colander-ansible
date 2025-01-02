@@ -1,0 +1,270 @@
+# {{ ansible_managed }}
+
+volumes:
+  production_traefik: {}
+  production_traefik_logs: {}
+  production_colander_postgres_data: {}
+  production_colander_postgres_data_backups: {}
+  production_threatr_postgres_data: {}
+  production_threatr_postgres_data_backups: {}
+  production_colander_minio_data: {}
+  production_colander_es_data: {}
+
+networks:
+  frontend:
+  backend:
+    driver: bridge
+
+services:
+  # Databases
+  colander-postgres:
+    build:
+      context: .
+      dockerfile: ./compose/postgres/Dockerfile
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+    networks:
+      - backend
+    volumes:
+      - production_colander_postgres_data:/var/lib/postgresql/data:Z
+      - production_colander_postgres_data_backups:/backups:z
+    env_file:
+      - {{ dot_env_files_dir }}/{{ stack.services.colander_postgres.dot_env_file}}
+
+  threatr-postgres:
+    build:
+      context: .
+      dockerfile: ./compose/postgres/Dockerfile
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+    networks:
+      - backend
+    volumes:
+      - production_threatr_postgres_data:/var/lib/postgresql/data:Z
+      - production_threatr_postgres_data_backups:/backups:z
+    env_file:
+      - {{ dot_env_files_dir }}/{{ stack.services.threatr_postgres.dot_env_file}}
+
+  colander-front:
+    image: ghcr.io/piroguetoolsuite/colander:{{stack.services.colander.version}}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+    networks:
+      - backend
+    depends_on:
+      - colander-postgres
+      - cyberchef
+      - elasticsearch
+      - playwright
+      - minio
+      - redis
+    command: /start
+    env_file:
+      - {{ dot_env_files_dir }}/{{ stack.base.dot_env_file}}
+      - {{ dot_env_files_dir }}/{{ stack.services.minio.dot_env_file}}
+      - {{ dot_env_files_dir }}/{{ stack.services.colander.dot_env_file}}
+      - {{ dot_env_files_dir }}/{{ stack.services.colander_postgres.dot_env_file}}
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  colander-worker:
+    image: ghcr.io/piroguetoolsuite/colander:{{stack.services.colander.version}}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+    networks:
+      - backend
+    depends_on:
+      - colander-postgres
+      - elasticsearch
+      - playwright
+      - minio
+      - redis
+    command: /start-worker
+    env_file:
+      - {{ dot_env_files_dir }}/{{ stack.base.dot_env_file}}
+      - {{ dot_env_files_dir }}/{{ stack.services.minio.dot_env_file}}
+      - {{ dot_env_files_dir }}/{{ stack.services.colander.dot_env_file}}
+      - {{ dot_env_files_dir }}/{{ stack.services.colander_postgres.dot_env_file}}
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  threatr-front:
+    image: ghcr.io/piroguetoolsuite/threatr:main
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+    networks:
+      - backend
+    depends_on:
+      - threatr-postgres
+      - elasticsearch
+      - redis
+    command: /start
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    env_file:
+      - {{ dot_env_files_dir }}/{{ stack.base.dot_env_file}}
+      - {{ dot_env_files_dir }}/{{ stack.services.threatr.dot_env_file}}
+      - {{ dot_env_files_dir }}/{{ stack.services.threatr_postgres.dot_env_file}}
+
+  threatr-worker:
+    image: ghcr.io/piroguetoolsuite/threatr:main
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+    networks:
+      - backend
+    depends_on:
+      - threatr-postgres
+      - elasticsearch
+      - redis
+    command: /start-worker
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    env_file:
+      - {{ dot_env_files_dir }}/{{ stack.base.dot_env_file}}
+      - {{ dot_env_files_dir }}/{{ stack.services.threatr.dot_env_file}}
+      - {{ dot_env_files_dir }}/{{ stack.services.threatr_postgres.dot_env_file}}
+
+  traefik:
+    build:
+      context: .
+      dockerfile: ./compose/traefik/Dockerfile
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      - colander-front
+      - threatr-front
+      - cyberchef
+    volumes:
+      - production_traefik:/etc/traefik/acme:z
+      - production_traefik_logs:/logs/:z
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+
+  cyberchef:
+    image: mpepping/cyberchef:{{stack.services.cyberchef.version}}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+    networks:
+      - backend
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  playwright:
+    image: ghcr.io/piroguetoolsuite/playwright-rest-api:{{stack.services.playwright.version}}
+    container_name: colander_production_playwright
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+    networks:
+      - backend
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  elasticsearch:
+    image: elasticsearch:{{stack.services.elasticsearch.version}}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+    networks:
+      - backend
+    volumes:
+      - production_colander_es_data:/usr/share/elasticsearch/data
+    environment:
+      - discovery.type='single-node'
+      - xpack.security.enabled='false'
+      - "ES_JAVA_OPTS=-Xms{{stack.services.elasticsearch.xms}} -Xmx{{stack.services.elasticsearch.xmx}}"
+
+  minio:
+    image: quay.io/minio/minio:{{stack.services.minio.version}}
+    volumes:
+      - production_colander_minio_data:/data
+    command: server /data
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+    networks:
+      - backend
+    env_file:
+      - {{ dot_env_files_dir }}/{{ stack.services.minio.dot_env_file}}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  watchtower:
+    image: containrrr/watchtower:{{stack.services.watchtower.version}}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+    networks:
+      - backend
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - {{docker_socket_path}}:/var/run/docker.sock:ro
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+      {{ stack.services.watchtower.environment | to_nice_yaml | indent(6) }}
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  redis:
+    image: redis:6
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+    networks:
+      - backend

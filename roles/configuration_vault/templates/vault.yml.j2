@@ -1,0 +1,63 @@
+# vault_acme_email: email address passed to Let's Encrypt
+# vault_admin_name: administrator’s full name
+# vault_admin_email: email address for crash and error notifications
+# vault_root_domain: domain name pointing to your server
+# vault_django_default_from_email: email address used for sending emails
+# vault_email_host: host for sending email (can be the SMTP server of your email provider)
+# vault_email_host_user: username for the SMTP server
+# vault_email_host_password: password for the SMTP server
+# vault_email_port: port for the SMTP server
+# vault_email_use_tls: true if the SMTP server uses TLS, false otherwise
+# vault_email_use_ssl: true if the SMTP server uses SSL, false otherwise
+
+colander_vault:
+  # Email
+  acme_email: ""
+  admin_name: ""
+  admin_email: ""
+  django_default_from_email: ""
+  email_host: ""
+  email_host_user: ""
+  email_host_password: ""
+  email_port: ""
+  email_use_tls: ""
+  email_use_ssl: ""
+
+  # Domains & sub-domains
+  root_domain: "{{ root_domain }}"
+  colander_base_url: "https://colander.{{ root_domain }}" 
+  colander_django_allowed_hosts: "colander.{{ root_domain }}"
+  colander_fqdn: "colander.{{ root_domain }}"
+  threatr_base_url: "https://threatr.{{ root_domain }}" 
+  threatr_django_allowed_hosts: "threatr.{{ root_domain }}"
+  threatr_fqdn: "threatr.{{ root_domain }}"
+  cyberchef_base_url: "https://cyberchef.{{ root_domain }}" 
+  cyberchef_fqdn: "cyberchef.{{ root_domain }}"
+  traefik_base_url: "https://traefik.{{ root_domain }}" 
+  traefik_fqdn: "traefik.{{ root_domain }}" 
+
+  # Traefik
+  traefik_auth_salt: {{ lookup('community.general.random_string', length=22, min_lower=4, min_numeric=4, special=false) }}"
+  traefik_admin_user: "admin"
+  traefik_admin_password: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
+
+  # Colander
+  colander_django_secret_key: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
+  colander_django_admin_url: "{{ lookup('community.general.random_string', length=32, min_lower=4, min_numeric=4, special=false) }}"
+  colander_postgres_user: "{{ lookup('community.general.random_string', length=32, min_lower=4, min_numeric=4, special=false) }}"
+  colander_postgres_password: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
+  colander_admin_user: "admin"
+  colander_admin_password: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
+
+  # Threatr
+  threatr_django_secret_key: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
+  threatr_django_admin_url: "{{ lookup('community.general.random_string', length=32, min_lower=4, min_numeric=4, special=false) }}"
+  threatr_postgres_user: "{{ lookup('community.general.random_string', length=32, min_lower=4, min_numeric=4, special=false) }}"
+  threatr_postgres_password: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
+  threatr_admin_user: "admin"
+  threatr_admin_password: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
+
+  # Minio
+  minio_access_key: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
+  minio_secret_key: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
+

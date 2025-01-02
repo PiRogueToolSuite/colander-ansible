@@ -1,0 +1,119 @@
+---
+- name: 'Disable root docker.service'
+  ansible.builtin.systemd:
+    name: docker.service
+    state: stopped
+    enabled: false
+  when: docker_rootless and docker_disable_root_daemon
+
+- name: 'Disable root docker.socket'
+  ansible.builtin.systemd:
+    name: docker.socket
+    state: stopped
+    enabled: false
+  when: docker_rootless and docker_disable_root_daemon
+
+- name: 'Delete Docker socket'
+  ansible.builtin.file:
+    state: absent
+    path: /var/run/docker.sock
+  when: docker_rootless and docker_disable_root_daemon
+
+- name: 'Install uidmap for rootless UID mapping'
+  ansible.builtin.package:
+    name: uidmap
+    state: present
+  when: docker_rootless
+
+- name: 'Install slirp4netns'
+  ansible.builtin.apt:
+    pkg:
+      - dbus-user-session
+      - slirp4netns
+    state: present
+  when: docker_rootless
+
+- name: 'Install Docker rootless'
+  become: false
+  ansible.builtin.shell: dockerd-rootless-setuptool.sh install
+  args:
+    creates: /home/{{ ansible_user }}/.config/systemd/user/docker.service
+  when: docker_rootless
+
+- name: 'Set capabilities for rootlesskit'
+  community.general.capabilities:
+    path: /usr/bin/rootlesskit
+    capability: cap_net_bind_service+ep
+    state: present
+  when: docker_rootless
+
+- name: 'Allow exposing privileged ports'
+  # https://github.com/rootless-containers/rootlesskit/blob/v2.0.0/docs/port.md
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_unprivileged_port_start
+    value: '0'
+    sysctl_set: true
+    state: present
+    reload: true
+  when: docker_rootless
+
+- name: Create docker.service.d directory
+  ansible.builtin.file:
+    path: '/home/{{ ansible_user }}/.config/systemd/user/docker.service.d/'
+    state: directory
+    owner: {{ ansible_user }}
+    group: {{ ansible_user }}
+    mode: 0755
+  when: docker_rootless
+
+- name: Override docker service
+  # https://github.com/rootless-containers/rootlesskit/blob/v2.0.0/docs/network.md
+  # https://github.com/rootless-containers/rootlesskit/blob/v2.0.0/docs/port.md
+  ansible.builtin.copy:
+    src: files/systemd_docker_override.conf
+    dest: '/home/{{ ansible_user }}/.config/systemd/user/docker.service.d/override.conf'
+    owner: {{ ansible_user }}
+    group: {{ ansible_user }}
+    mode: 0644
+  when: docker_rootless
+
+- name: 'Restart docker service'
+  become: false
+  ansible.builtin.systemd:
+    state: restarted
+    name: docker
+    scope: user
+    enabled: true
+  when: docker_rootless
+
+- name: 'Enable linger'
+  become: true
+  ansible.builtin.shell: loginctl enable-linger {{ ansible_user }}
+  when: docker_rootless
+
+- name: 'Get current user ID'
+  getent:
+    database: passwd
+    key: '{{ ansible_user }}'
+  when: docker_rootless
+
+- name: 'Add export for path'
+  become: false
+  ansible.builtin.lineinfile:
+    path: /home/{{ ansible_user }}/.bashrc
+    line: export path=/usr/bin:$PATH
+    create: yes
+  when: docker_rootless
+
+- name: 'Cache the DOCKER_HOST variable'
+  ansible.builtin.set_fact:
+    docker_host: 'unix:///run/user/{{ getent_passwd[ansible_user][1] }}/docker.sock'
+  when: docker_rootless
+
+- name: 'Add export for DOCKER_HOST'
+  become: false
+  ansible.builtin.lineinfile:
+    path: /home/{{ ansible_user }}/.bashrc
+    line: export DOCKER_HOST={{ docker_host }}
+    create: yes
+  when: docker_rootless

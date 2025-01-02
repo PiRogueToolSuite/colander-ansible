@@ -1,0 +1,49 @@
+---
+- name: Update and upgrade all packages to the latest version
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
+    cache_valid_time: 3600
+
+- name: Install required packages
+  ansible.builtin.apt:
+    pkg:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - software-properties-common
+      - python3-docker
+
+- name: Install docker
+  ansible.builtin.include_role:
+    name: geerlingguy.docker
+
+- name: 'Init a new swarm with default parameters'
+  become: false
+  community.docker.docker_swarm:
+    state: present
+    docker_host: '{{ docker_host }}'
+  when: not use_docker_compose
+
+- name: 'Enable memory over commit'
+  # https://github.com/jemalloc/jemalloc/issues/1328
+  ansible.posix.sysctl:
+    name: vm.overcommit_memory
+    value: '1'
+    sysctl_set: true
+    state: present
+    reload: true
+
+- name: Enable and start Docker services
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - docker.service
+    - containerd.service
+  when: not docker_rootless  
+
+- include_tasks: rootless.yml
+  when: docker_rootless

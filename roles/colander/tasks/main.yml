@@ -1,0 +1,7 @@
+- include_tasks: configure.yml
+  when: use_docker_compose
+  tags: configure
+
+- include_tasks: docker-compose-deploy.yml
+  when: use_docker_compose
+  tags: deploy

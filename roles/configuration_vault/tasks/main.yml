@@ -1,0 +1,8 @@
+---
+- name: Bootstrap the vault
+  become: false
+  ansible.builtin.template:
+    src: ./templates/vault.yml.j2
+    dest: ./vault.yml
+    mode: '0644'
+    force: false

@@ -1,0 +1,105 @@
+---
+- name: Ensures the installation dir exists
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - '{{ colander_installation_path }}'
+    - '{{ colander_installation_path }}/.envs'
+    - '{{ colander_installation_path }}/volumes'
+    - '{{ colander_installation_path }}/compose/traefik'
+    - '{{ colander_installation_path }}/compose/postgres'
+  tags: [configure, deploy, upgrade]
+
+- name: Get current user ID
+  ansible.builtin.getent:
+    database: passwd
+    key: '{{ ansible_user }}'
+  when: docker_rootless
+  tags: [configure, deploy, upgrade]
+
+- name: Cache the DOCKER_HOST variable
+  ansible.builtin.set_fact:
+    docker_host: 'unix:///run/user/{{ getent_passwd[ansible_user][1] }}/docker.sock'
+  when: docker_rootless
+  tags: [configure, deploy, upgrade]
+
+- name: Cache the DOCKER_SOCKET_PATH variable
+  ansible.builtin.set_fact:
+    docker_socket_path: '/run/user/{{ getent_passwd[ansible_user][1] }}/docker.sock'
+  when: docker_rootless
+  tags: [configure, deploy, upgrade]
+
+- name: Generate Docker Compose file
+  become: false
+  ansible.builtin.template:
+    src: './templates/{{ compose_file_template }}'
+    dest: '{{ colander_installation_path }}/{{ compose_file }}'
+    mode: '0644'
+    force: true
+  tags: configure
+
+- name: Copy Postgres scripts
+  become: false
+  ansible.builtin.copy:
+    src: './files/postgres'
+    dest: '{{ colander_installation_path }}/compose/'
+    force: true
+  tags: configure
+
+- name: Generate services configuration
+  become: false
+  ansible.builtin.template:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    mode: '0644'
+    force: true
+  loop:
+    - {
+      src: './templates/traefik/Dockerfile.j2',
+      dest: '{{ colander_installation_path }}/compose/traefik/Dockerfile'
+    }
+    - {
+      src: './templates/traefik/traefik.yml.j2',
+      dest: '{{ colander_installation_path }}/compose/traefik/traefik.yml'
+    }
+    - {
+      src: './templates/postgres/Dockerfile.j2',
+      dest: '{{ colander_installation_path }}/compose/postgres/Dockerfile'
+    }
+  tags: configure
+
+- name: Generate .env files
+  become: false
+  ansible.builtin.template:
+    src: './templates/dot_env_file.j2'
+    dest: '{{ colander_installation_path }}/{{ dot_env_files_dir }}/{{ item.dot_env_file }}'
+    mode: '0644'
+    force: true
+  with_items:
+    - '{{ stack.base }}'
+    - '{{ stack.services.minio }}'
+    - '{{ stack.services.colander }}'
+    - '{{ stack.services.colander_postgres }}'
+    - '{{ stack.services.threatr }}'
+    - '{{ stack.services.threatr_postgres }}'
+  tags: configure
+
+# - name: Create the Docker secrets
+#   become: true
+#   community.docker.docker_secret:
+#     name: "{{ item.key }}"
+#     data: "{{ item.value }}"
+#     docker_host: '{{ docker_host }}'
+#     force: true
+#     state: present
+#   loop: "{{ lookup('ansible.builtin.dict', colander_vault) }}"
+#   when: not use_docker_compose
+
+# - name: Deploy docker container
+#   community.docker.docker_compose_v2:
+#     project_src: '{{ colander_installation_path }}'
+#     docker_host: '{{ docker_host }}'
+#     state: present
+#   register: output
+#   when: not use_docker_compose

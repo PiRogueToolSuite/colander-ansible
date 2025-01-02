@@ -1,0 +1,11 @@
+---
+- name: Configure
+  hosts: local
+  vars_prompt:
+    - name: root_domain
+      prompt: Root domain name
+      unsafe: false
+      private: false
+
+  roles:
+    - role: configuration_vault

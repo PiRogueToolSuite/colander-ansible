@@ -1,0 +1,109 @@
+docker_rootless: true
+docker_disable_root_daemon: true
+use_docker_compose: true
+docker_host: 'unix:///var/run/docker.sock'
+docker_socket_path: '/var/run/docker.sock'
+colander_installation_path: '/home/{{ ansible_user }}/colander'
+dot_env_files_dir: .envs
+compose_file_template: no-sso.yml.j2
+compose_file: docker-compose.yml
+
+stack:
+  base:
+    dot_env_file: .base
+    environment:
+      - USE_DOCKER=yes
+      - COLANDER_BASE_URL={{ colander_vault.colander_base_url }}
+      - THREATR_BASE_URL={{ colander_vault.threatr_base_url }}
+      - CYBERCHEF_BASE_URL={{ colander_vault.cyberchef_base_url }}
+      - ACME_EMAIL={{ colander_vault.acme_email }}
+      - ADMIN_NAME={{ colander_vault.admin_name }}
+      - ADMIN_EMAIL={{ colander_vault.admin_email }}
+      - DJANGO_DEFAULT_FROM_EMAIL={{ colander_vault.django_default_from_email }}
+      - EMAIL_HOST={{ colander_vault.email_host }}
+      - EMAIL_HOST_USER={{ colander_vault.email_host_user }}
+      - EMAIL_HOST_PASSWORD={{ colander_vault.email_host_password }}
+      - EMAIL_PORT={{ colander_vault.email_port }}
+      - EMAIL_USE_TLS={{ colander_vault.email_use_tls }}
+      - EMAIL_USE_SSL={{ colander_vault.email_use_ssl }}
+      - LICENSE_ENABLED=yes
+  services:
+    traefik:
+      version: v3.2.2
+      volumes:
+        config: '{{ colander_installation_path }}/volumes/traefik'
+      vars:
+        acme_email: '{{ colander_vault.acme_email }}'
+        colander_fqdn: '{{ colander_vault.colander_fqdn }}'
+        threatr_fqdn: '{{ colander_vault.threatr_fqdn }}'
+        cyberchef_fqdn: '{{ colander_vault.cyberchef_fqdn }}'
+        enable_dashboard: true
+    minio:
+      version: RELEASE.2022-09-22T18-57-27Z
+      dot_env_file: .minio
+      volumes:
+        data: '{{ colander_installation_path }}/volumes/minio'
+      environment:
+        - MINIO_ACCESS_KEY={{ colander_vault.minio_access_key}}
+        - MINIO_SECRET_KEY={{ colander_vault.minio_secret_key}}
+    watchtower:
+      version: latest
+      environment:
+        - WATCHTOWER_POLL_INTERVAL=3600
+    colander:
+      version: next 
+      dot_env_file: .colander
+      environment:
+        - REDIS_URL=redis://redis:6379/0
+        - DJANGO_SECURE_SSL_REDIRECT=false
+        - DJANGO_ACCOUNT_ALLOW_REGISTRATION=False
+        - DJANGO_SETTINGS_MODULE=config.settings.production
+        - WEB_CONCURRENCY=4
+        - DJANGO_ALLOWED_HOSTS={{ colander_vault.colander_django_allowed_hosts}}
+        - DJANGO_SECRET_KEY={{ colander_vault.colander_django_secret_key}}
+        - DJANGO_ADMIN_URL={{ colander_vault.colander_django_admin_url}}
+    colander_postgres:
+      volumes:
+        data: '{{ colander_installation_path }}/volumes/colander-db'
+        backups: '{{ colander_installation_path }}/volumes/colander-db-backups'
+      dot_env_file: .colander-postgres
+      environment:
+        - POSTGRES_HOST=colander-postgres
+        - POSTGRES_PORT=5432
+        - POSTGRES_DB=colander
+        - POSTGRES_USER={{ colander_vault.colander_postgres_user }}
+        - POSTGRES_PASSWORD={{ colander_vault.colander_postgres_password }}
+    threatr:
+      dot_env_file: .threatr
+      environment:
+        - REDIS_URL=redis://redis:6379/0
+        - DJANGO_SECURE_SSL_REDIRECT=false
+        - WEB_CONCURRENCY=4
+        - DJANGO_SETTINGS_MODULE=config.settings.production
+        - DJANGO_ACCOUNT_ALLOW_REGISTRATION=False
+        - DJANGO_ALLOWED_HOSTS={{ colander_vault.threatr_django_allowed_hosts }}
+        - DJANGO_SECRET_KEY={{ colander_vault.threatr_django_secret_key }}
+        - DJANGO_ADMIN_URL={{ colander_vault.threatr_django_admin_url }}
+    threatr_postgres:
+      volumes:
+        data: '{{ colander_installation_path }}/volumes/threatr-db'
+        backups: '{{ colander_installation_path }}/volumes/threatr-db-backups'
+      dot_env_file: .threatr-postgres
+      environment:
+        - POSTGRES_HOST=threatr-postgres
+        - POSTGRES_PORT=5432
+        - POSTGRES_DB=threatr
+        - POSTGRES_USER={{ colander_vault.threatr_postgres_user }}
+        - POSTGRES_PASSWORD={{ colander_vault.threatr_postgres_password }}
+    cyberchef:
+      version: latest
+    playwright:
+      version: main
+    elasticsearch:
+      volumes:
+        data: '{{ colander_installation_path }}/volumes/elasticsearch'
+      version: 8.4.1
+      xms: 2048m
+      xmx: 2048m
+
+
