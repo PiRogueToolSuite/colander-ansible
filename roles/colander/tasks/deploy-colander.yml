@@ -1,0 +1,37 @@
+- name: Create Colander admin user
+  community.docker.docker_compose_v2_run:
+    service: colander-front
+    project_src: '{{ colander_installation_path }}'
+    command: python manage.py createsuperuser --noinput
+    docker_host: '{{ docker_host }}'
+    remove_orphans: true
+    cleanup: true
+    env:
+      DJANGO_SUPERUSER_USERNAME: '{{ colander_vault.colander_admin_user }}'
+      DJANGO_SUPERUSER_EMAIL: '{{ colander_vault.admin_email }}'
+      DJANGO_SUPERUSER_PASSWORD: '{{ colander_vault.colander_admin_password }}'
+  register: command_result
+  changed_when: command_result.rc == 0
+  failed_when: 
+    - command_result.rc != 0
+    - '"That username is already taken" not in command_result.stderr'
+  tags: [deploy]
+
+- name: Create Threatr admin user
+  community.docker.docker_compose_v2_run:
+    service: threatr-front
+    project_src: '{{ colander_installation_path }}'
+    command: python manage.py createsuperuser --noinput
+    docker_host: '{{ docker_host }}'
+    remove_orphans: true
+    cleanup: true
+    env:
+      DJANGO_SUPERUSER_USERNAME: '{{ colander_vault.threatr_admin_user }}'
+      DJANGO_SUPERUSER_EMAIL: '{{ colander_vault.admin_email }}'
+      DJANGO_SUPERUSER_PASSWORD: '{{ colander_vault.threatr_admin_password }}'
+  register: command_result
+  changed_when: command_result.rc == 0
+  failed_when: 
+    - command_result.rc != 0
+    - '"That username is already taken" not in command_result.stderr'
+  tags: [deploy]

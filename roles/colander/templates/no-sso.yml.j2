@@ -9,6 +9,12 @@ volumes:
   production_threatr_postgres_data_backups: {}
   production_colander_minio_data: {}
   production_colander_es_data: {}
+  dummy:
+    driver: local
+    driver_opts:
+      type: none
+      device: {{ docker_volumes_path }}/dummy
+      o: bind
 
 networks:
   frontend:
@@ -23,10 +29,14 @@ services:
       dockerfile: ./compose/postgres/Dockerfile
     restart: unless-stopped
     logging:
-      driver: json-file
+      driver: journald
       options:
-        max-size: 10m
-        max-file: 5
+        labels: colander.service.name,colander.service.type
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - backend
     volumes:
@@ -34,6 +44,9 @@ services:
       - production_colander_postgres_data_backups:/backups:z
     env_file:
       - {{ dot_env_files_dir }}/{{ stack.services.colander_postgres.dot_env_file}}
+    labels:
+      colander.service.name: colander-postgres
+      colander.service.type: database
 
   threatr-postgres:
     build:
@@ -41,10 +54,14 @@ services:
       dockerfile: ./compose/postgres/Dockerfile
     restart: unless-stopped
     logging:
-      driver: json-file
+      driver: journald
       options:
-        max-size: 10m
-        max-file: 5
+        labels: colander.service.name,colander.service.type
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - backend
     volumes:
@@ -52,24 +69,32 @@ services:
       - production_threatr_postgres_data_backups:/backups:z
     env_file:
       - {{ dot_env_files_dir }}/{{ stack.services.threatr_postgres.dot_env_file}}
+    labels:
+      colander.service.name: threatr-postgres
+      colander.service.type: database
 
   colander-front:
     image: ghcr.io/piroguetoolsuite/colander:{{stack.services.colander.version}}
     restart: unless-stopped
     logging:
-      driver: json-file
+      driver: journald
       options:
-        max-size: 10m
-        max-file: 5
+        labels: colander.service.name,colander.service.type
     networks:
       - backend
     depends_on:
-      - colander-postgres
-      - cyberchef
-      - elasticsearch
-      - playwright
-      - minio
-      - redis
+      colander-postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      playwright:
+        condition: service_started
+      cyberchef:
+        condition: service_started
     command: /start
     env_file:
       - {{ dot_env_files_dir }}/{{ stack.base.dot_env_file}}
@@ -77,24 +102,30 @@ services:
       - {{ dot_env_files_dir }}/{{ stack.services.colander.dot_env_file}}
       - {{ dot_env_files_dir }}/{{ stack.services.colander_postgres.dot_env_file}}
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: colander-front
+      colander.service.type: web
 
   colander-worker:
     image: ghcr.io/piroguetoolsuite/colander:{{stack.services.colander.version}}
     restart: unless-stopped
     logging:
-      driver: json-file
+      driver: journald
       options:
-        max-size: 10m
-        max-file: 5
+        labels: colander.service.name,colander.service.type
     networks:
       - backend
     depends_on:
-      - colander-postgres
-      - elasticsearch
-      - playwright
-      - minio
-      - redis
+      colander-postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      playwright:
+        condition: service_started
     command: /start-worker
     env_file:
       - {{ dot_env_files_dir }}/{{ stack.base.dot_env_file}}
@@ -102,51 +133,61 @@ services:
       - {{ dot_env_files_dir }}/{{ stack.services.colander.dot_env_file}}
       - {{ dot_env_files_dir }}/{{ stack.services.colander_postgres.dot_env_file}}
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: colander-worker
+      colander.service.type: worker
 
   threatr-front:
-    image: ghcr.io/piroguetoolsuite/threatr:main
+    image: ghcr.io/piroguetoolsuite/threatr:{{stack.services.threatr.version}}
     restart: unless-stopped
     logging:
-      driver: json-file
+      driver: journald
       options:
-        max-size: 10m
-        max-file: 5
+        labels: colander.service.name,colander.service.type
     networks:
       - backend
     depends_on:
-      - threatr-postgres
-      - elasticsearch
-      - redis
+      threatr-postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     command: /start
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
     env_file:
       - {{ dot_env_files_dir }}/{{ stack.base.dot_env_file}}
       - {{ dot_env_files_dir }}/{{ stack.services.threatr.dot_env_file}}
       - {{ dot_env_files_dir }}/{{ stack.services.threatr_postgres.dot_env_file}}
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: threatr-front
+      colander.service.type: web
 
   threatr-worker:
-    image: ghcr.io/piroguetoolsuite/threatr:main
+    image: ghcr.io/piroguetoolsuite/threatr:{{stack.services.threatr.version}}
     restart: unless-stopped
     logging:
-      driver: json-file
+      driver: journald
       options:
-        max-size: 10m
-        max-file: 5
+        labels: colander.service.name,colander.service.type
     networks:
       - backend
     depends_on:
-      - threatr-postgres
-      - elasticsearch
-      - redis
+      threatr-postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     command: /start-worker
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
     env_file:
       - {{ dot_env_files_dir }}/{{ stack.base.dot_env_file}}
       - {{ dot_env_files_dir }}/{{ stack.services.threatr.dot_env_file}}
       - {{ dot_env_files_dir }}/{{ stack.services.threatr_postgres.dot_env_file}}
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: threatr-worker
+      colander.service.type: worker
 
   traefik:
     build:
@@ -154,10 +195,9 @@ services:
       dockerfile: ./compose/traefik/Dockerfile
     restart: unless-stopped
     logging:
-      driver: json-file
+      driver: journald
       options:
-        max-size: 10m
-        max-file: 5
+        labels: colander.service.name,colander.service.type
     networks:
       - frontend
       - backend
@@ -171,50 +211,63 @@ services:
     ports:
       - "0.0.0.0:80:80"
       - "0.0.0.0:443:443"
+    labels:
+      colander.service.name: traefik
+      colander.service.type: proxy
 
   cyberchef:
     image: mpepping/cyberchef:{{stack.services.cyberchef.version}}
     restart: unless-stopped
     logging:
-      driver: json-file
+      driver: journald
       options:
-        max-size: 10m
-        max-file: 5
+        labels: colander.service.name,colander.service.type
     networks:
       - backend
     labels:
-      - "com.centurylinklabs.watchtower.enable=false"
+      com.centurylinklabs.watchtower.enable: false
+      colander.service.name: cyberchef
+      colander.service.type: web
 
   playwright:
     image: ghcr.io/piroguetoolsuite/playwright-rest-api:{{stack.services.playwright.version}}
     container_name: colander_production_playwright
     restart: unless-stopped
     logging:
-      driver: json-file
+      driver: journald
       options:
-        max-size: 10m
-        max-file: 5
+        labels: colander.service.name,colander.service.type
     networks:
       - backend
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: playwright
+      colander.service.type: backend
 
   elasticsearch:
     image: elasticsearch:{{stack.services.elasticsearch.version}}
     restart: unless-stopped
     logging:
-      driver: json-file
+      driver: journald
       options:
-        max-size: 10m
-        max-file: 5
+        labels: colander.service.name,colander.service.type
     networks:
       - backend
     volumes:
       - production_colander_es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s -X GET http://localhost:9200/_cluster/health?pretty | grep status | grep -q '\\(green\\|yellow\\)'" ]
+      interval: 10s
+      timeout: 10s
+      retries: 24
     environment:
-      - discovery.type='single-node'
-      - xpack.security.enabled='false'
-      - "ES_JAVA_OPTS=-Xms{{stack.services.elasticsearch.xms}} -Xmx{{stack.services.elasticsearch.xmx}}"
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - path.repo=/usr/share/elasticsearch/data/snapshots
+      - ES_JAVA_OPTS=-Xms{{stack.services.elasticsearch.xms}} -Xmx{{stack.services.elasticsearch.xmx}}
+    labels:
+      colander.service.name: elasticsearch
+      colander.service.type: database
 
   minio:
     image: quay.io/minio/minio:{{stack.services.minio.version}}
@@ -223,28 +276,29 @@ services:
     command: server /data
     restart: unless-stopped
     logging:
-      driver: json-file
+      driver: journald
       options:
-        max-size: 10m
-        max-file: 5
-    networks:
-      - backend
-    env_file:
-      - {{ dot_env_files_dir }}/{{ stack.services.minio.dot_env_file}}
+        labels: colander.service.name,colander.service.type
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - backend
+    env_file:
+      - {{ dot_env_files_dir }}/{{ stack.services.minio.dot_env_file}}
+    labels:
+      colander.service.name: minio
+      colander.service.type: storage
 
   watchtower:
     image: containrrr/watchtower:{{stack.services.watchtower.version}}
     restart: unless-stopped
     logging:
-      driver: json-file
+      driver: journald
       options:
-        max-size: 10m
-        max-file: 5
+        labels: colander.service.name,colander.service.type
     networks:
       - backend
     volumes:
@@ -256,15 +310,24 @@ services:
       - WATCHTOWER_INCLUDE_RESTARTING=true
       {{ stack.services.watchtower.environment | to_nice_yaml | indent(6) }}
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: watchtower
+      colander.service.type: docker
 
   redis:
     image: redis:6
     restart: unless-stopped
     logging:
-      driver: json-file
+      driver: journald
       options:
-        max-size: 10m
-        max-file: 5
+        labels: colander.service.name,colander.service.type
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 2s
+      timeout: 3s
+      retries: 5
     networks:
       - backend
+    labels:
+      colander.service.name: redis
+      colander.service.type: database

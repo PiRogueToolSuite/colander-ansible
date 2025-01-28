@@ -1,7 +1,7 @@
-- include_tasks: configure.yml
+- include_tasks: configure-colander.yml
   when: use_docker_compose
-  tags: configure
+  tags: [configure, deploy, upgrade]
 
-- include_tasks: docker-compose-deploy.yml
+- include_tasks: deploy-colander.yml
   when: use_docker_compose
-  tags: deploy
+  tags: [deploy, upgrade]

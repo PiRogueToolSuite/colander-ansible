@@ -5,11 +5,11 @@
     state: directory
   loop:
     - '{{ colander_installation_path }}'
+    - '{{ docker_volumes_path }}'
     - '{{ colander_installation_path }}/.envs'
-    - '{{ colander_installation_path }}/volumes'
     - '{{ colander_installation_path }}/compose/traefik'
     - '{{ colander_installation_path }}/compose/postgres'
-  tags: [configure, deploy, upgrade]
+  tags: configure
 
 - name: Get current user ID
   ansible.builtin.getent:
@@ -45,6 +45,15 @@
     src: './files/postgres'
     dest: '{{ colander_installation_path }}/compose/'
     force: true
+  tags: configure
+
+- name: Copy backup script
+  become: false
+  ansible.builtin.copy:
+    src: './files/backup'
+    dest: '{{ colander_installation_path }}/backup'
+    force: true
+    mode: 0744
   tags: configure
 
 - name: Generate services configuration
@@ -85,21 +94,3 @@
     - '{{ stack.services.threatr_postgres }}'
   tags: configure
 
-# - name: Create the Docker secrets
-#   become: true
-#   community.docker.docker_secret:
-#     name: "{{ item.key }}"
-#     data: "{{ item.value }}"
-#     docker_host: '{{ docker_host }}'
-#     force: true
-#     state: present
-#   loop: "{{ lookup('ansible.builtin.dict', colander_vault) }}"
-#   when: not use_docker_compose
-
-# - name: Deploy docker container
-#   community.docker.docker_compose_v2:
-#     project_src: '{{ colander_installation_path }}'
-#     docker_host: '{{ docker_host }}'
-#     state: present
-#   register: output
-#   when: not use_docker_compose

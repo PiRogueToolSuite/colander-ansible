@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+# Backup Postgres databases
+docker compose run --rm colander-postgres backup
+docker compose run --rm threatr-postgres backup
+
+# Create ElasticSearch snapshot
+docker compose exec -T elasticsearch /bin/bash << EOF
+curl -X PUT http://localhost:9200/_snapshot/snapshots -H "Content-Type: application/json" -d '
+ {
+    "type": "fs",
+    "settings": {
+        "location": "/usr/share/elasticsearch/data/snapshots",
+        "compress": true
+    }
+ }
+ '
+EOF

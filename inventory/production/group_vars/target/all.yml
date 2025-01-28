@@ -4,6 +4,7 @@ use_docker_compose: true
 docker_host: 'unix:///var/run/docker.sock'
 docker_socket_path: '/var/run/docker.sock'
 colander_installation_path: '/home/{{ ansible_user }}/colander'
+docker_volumes_path: '/home/{{ ansible_user }}/colander/volumes'
 dot_env_files_dir: .envs
 compose_file_template: no-sso.yml.j2
 compose_file: docker-compose.yml
@@ -31,7 +32,7 @@ stack:
     traefik:
       version: v3.2.2
       volumes:
-        config: '{{ colander_installation_path }}/volumes/traefik'
+        config: '{{ docker_volumes_path }}/traefik'
       vars:
         acme_email: '{{ colander_vault.acme_email }}'
         colander_fqdn: '{{ colander_vault.colander_fqdn }}'
@@ -42,10 +43,10 @@ stack:
       version: RELEASE.2022-09-22T18-57-27Z
       dot_env_file: .minio
       volumes:
-        data: '{{ colander_installation_path }}/volumes/minio'
+        data: '{{ docker_volumes_path }}/minio'
       environment:
-        - MINIO_ACCESS_KEY={{ colander_vault.minio_access_key}}
-        - MINIO_SECRET_KEY={{ colander_vault.minio_secret_key}}
+        - MINIO_ACCESS_KEY={{ colander_vault.minio_access_key }}
+        - MINIO_SECRET_KEY={{ colander_vault.minio_secret_key }}
     watchtower:
       version: latest
       environment:
@@ -59,13 +60,13 @@ stack:
         - DJANGO_ACCOUNT_ALLOW_REGISTRATION=False
         - DJANGO_SETTINGS_MODULE=config.settings.production
         - WEB_CONCURRENCY=4
-        - DJANGO_ALLOWED_HOSTS={{ colander_vault.colander_django_allowed_hosts}}
-        - DJANGO_SECRET_KEY={{ colander_vault.colander_django_secret_key}}
-        - DJANGO_ADMIN_URL={{ colander_vault.colander_django_admin_url}}
+        - DJANGO_ALLOWED_HOSTS={{ colander_vault.colander_django_allowed_hosts }}
+        - DJANGO_SECRET_KEY={{ colander_vault.colander_django_secret_key }}
+        - DJANGO_ADMIN_URL={{ colander_vault.colander_django_admin_url }}
     colander_postgres:
       volumes:
-        data: '{{ colander_installation_path }}/volumes/colander-db'
-        backups: '{{ colander_installation_path }}/volumes/colander-db-backups'
+        data: '{{ docker_volumes_path }}/colander-db'
+        backups: '{{ docker_volumes_path }}/colander-db-backups'
       dot_env_file: .colander-postgres
       environment:
         - POSTGRES_HOST=colander-postgres
@@ -74,6 +75,7 @@ stack:
         - POSTGRES_USER={{ colander_vault.colander_postgres_user }}
         - POSTGRES_PASSWORD={{ colander_vault.colander_postgres_password }}
     threatr:
+      version: main 
       dot_env_file: .threatr
       environment:
         - REDIS_URL=redis://redis:6379/0
@@ -86,8 +88,8 @@ stack:
         - DJANGO_ADMIN_URL={{ colander_vault.threatr_django_admin_url }}
     threatr_postgres:
       volumes:
-        data: '{{ colander_installation_path }}/volumes/threatr-db'
-        backups: '{{ colander_installation_path }}/volumes/threatr-db-backups'
+        data: '{{ docker_volumes_path }}/threatr-db'
+        backups: '{{ docker_volumes_path }}/threatr-db-backups'
       dot_env_file: .threatr-postgres
       environment:
         - POSTGRES_HOST=threatr-postgres
@@ -101,9 +103,9 @@ stack:
       version: main
     elasticsearch:
       volumes:
-        data: '{{ colander_installation_path }}/volumes/elasticsearch'
+        data: '{{ docker_volumes_path }}/elasticsearch'
       version: 8.4.1
-      xms: 2048m
-      xmx: 2048m
+      xms: 512m
+      xmx: 512m
 
 
