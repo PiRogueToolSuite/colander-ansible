@@ -23,11 +23,12 @@ On your Ansible host, run the command:
 ssh-copy-id -i ~/.ssh/my-key colander@[IP address of your server]
 ```
 
-Then, create a Python 3 virtual environment with the commands: 
+Then, create a Python 3 virtual environment and install the dependencies with the commands: 
 ```
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+ansible-galaxy install -r requirements.yml
 ```
 
 
