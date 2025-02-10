@@ -112,7 +112,7 @@ ansible-playbook -J -e configuration-vault.yml -i production.yml playbooks/colan
 ```
 The playbook automatically creates the `admin` users for Colander and Threatr, and deploy the whole stack on your server.
 
-Colander is now up and accessible on `https://colander.[root domain]/.
+Colander is now up and accessible on `https://colander.[root domain]/`.
 
 
 ## Other operations
