@@ -43,7 +43,7 @@ In the folder `host_vars`, rename the file `production-example.yml` in which you
 * Playwright, by setting `use_playwright` to False
 
 Example of host configuration:
-```json
+```yaml
 stack_overrides:
   flavor:
     use_threatr: True
