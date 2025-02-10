@@ -35,6 +35,11 @@ services:
       driver: journald
       options:
         labels: colander.service.name,colander.service.type
+    healthcheck:
+      test: [ "CMD", "grep", "-q", ":1388", "/proc/net/tcp" ]
+      interval: 30s
+      timeout: 2s
+      retries: 5
     networks:
       - backend
     depends_on:
@@ -151,6 +156,11 @@ services:
       driver: journald
       options:
         labels: colander.service.name,colander.service.type
+    healthcheck:
+      test: [ "CMD", "grep", "-q", ":1388", "/proc/net/tcp" ]
+      interval: 30s
+      timeout: 2s
+      retries: 5
     networks:
       - backend
     depends_on:
@@ -242,12 +252,15 @@ services:
       - frontend
       - backend
     depends_on:
-      - colander-front
+      colander-front:
+        condition: service_healthy
 {% if flavor.use_threatr %}
-      - threatr-front
+      threatr-front:
+        condition: service_healthy
 {% endif %}
 {% if flavor.use_cyberchef %}
-      - cyberchef
+      cyberchef:
+        condition: service_started
 {% endif %}
     volumes:
       - production_traefik:/etc/traefik/acme:z
