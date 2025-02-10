@@ -6,7 +6,9 @@ set -o nounset
 
 # Backup Postgres databases
 docker compose run --rm colander-postgres backup
+{% if flavor.use_threatr %}
 docker compose run --rm threatr-postgres backup
+{% endif %}
 
 # Create ElasticSearch snapshot
 docker compose exec -T elasticsearch /bin/bash << EOF

@@ -1,0 +1,10 @@
+stack_overrides:
+  flavor:
+    use_threatr: True
+    use_cyberchef: True
+    use_mandolin: True
+    use_playwright: True
+  services:
+    elasticsearch:
+      xms: 512m
+      xmx: 512m

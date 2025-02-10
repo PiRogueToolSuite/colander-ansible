@@ -1,6 +1,8 @@
 .idea/
 .vscode/
 trash/
-inventory/production/hosts.ini
 playbooks/vault.yml
 roles/geerlingguy.docker/
+production.yml
+host_vars/staging_1.yml
+configuration-vault.yml

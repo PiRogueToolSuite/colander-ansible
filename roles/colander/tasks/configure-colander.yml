@@ -1,4 +1,12 @@
 ---
+- name: Check that at least an A DNS record exists
+  ansible.builtin.assert:
+    that:
+      - dig != "A"
+  vars:
+    dig: "{{ lookup('community.general.dig', '{{ colander_vault.colander_fqdn }}') }}"
+  tags: [check, configure]
+
 - name: Ensures the installation dir exists
   file:
     path: "{{ item }}"
@@ -16,19 +24,19 @@
     database: passwd
     key: '{{ ansible_user }}'
   when: docker_rootless
-  tags: [configure, deploy, upgrade]
+  tags: [configure, deploy, upgrade, teardown]
 
 - name: Cache the DOCKER_HOST variable
   ansible.builtin.set_fact:
     docker_host: 'unix:///run/user/{{ getent_passwd[ansible_user][1] }}/docker.sock'
   when: docker_rootless
-  tags: [configure, deploy, upgrade]
+  tags: [configure, deploy, upgrade, teardown]
 
 - name: Cache the DOCKER_SOCKET_PATH variable
   ansible.builtin.set_fact:
     docker_socket_path: '/run/user/{{ getent_passwd[ansible_user][1] }}/docker.sock'
   when: docker_rootless
-  tags: [configure, deploy, upgrade]
+  tags: [configure, deploy, upgrade, teardown]
 
 - name: Generate Docker Compose file
   become: false
@@ -37,7 +45,8 @@
     dest: '{{ colander_installation_path }}/{{ compose_file }}'
     mode: '0644'
     force: true
-  tags: configure
+  register: configuration
+  tags: [configure, deploy]
 
 - name: Copy Postgres scripts
   become: false
@@ -49,8 +58,8 @@
 
 - name: Copy backup script
   become: false
-  ansible.builtin.copy:
-    src: './files/backup'
+  ansible.builtin.template:
+    src: './templates/backup.j2'
     dest: '{{ colander_installation_path }}/backup'
     force: true
     mode: 0744

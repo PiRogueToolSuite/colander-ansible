@@ -1,0 +1,27 @@
+- name: Tear down the whole stack
+  community.docker.docker_compose_v2:
+    project_src: '{{ colander_installation_path }}'
+    docker_host: '{{ docker_host }}'
+    state: absent
+    remove_images: "all"
+    remove_orphans: true
+    remove_volumes: true
+  tags: [teardown]
+
+- name: Delete all configuration files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - '{{ colander_installation_path }}'
+  tags: [teardown]
+
+- name: Prune everything
+  community.docker.docker_prune:
+    docker_host: '{{ docker_host }}'
+    containers: true
+    images: true
+    networks: true
+    volumes: true
+    builder_cache: true
+  tags: [teardown]

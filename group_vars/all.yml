@@ -9,11 +9,17 @@ dot_env_files_dir: .envs
 compose_file_template: no-sso.yml.j2
 compose_file: docker-compose.yml
 
+flavor:
+  use_mandolin: '{{ stack_overrides.flavor.use_mandolin | default(True)}}'
+  use_threatr: '{{ stack_overrides.flavor.use_threatr | default(True)}}'
+  use_cyberchef: '{{ stack_overrides.flavor.use_cyberchef | default(True)}}'
+  use_playwright: '{{ stack_overrides.flavor.use_playwright | default(True)}}'
+
 stack:
   base:
     dot_env_file: .base
     environment:
-      - USE_DOCKER=yes
+      - USE_DOCKER=True
       - COLANDER_BASE_URL={{ colander_vault.colander_base_url }}
       - THREATR_BASE_URL={{ colander_vault.threatr_base_url }}
       - CYBERCHEF_BASE_URL={{ colander_vault.cyberchef_base_url }}
@@ -27,7 +33,11 @@ stack:
       - EMAIL_PORT={{ colander_vault.email_port }}
       - EMAIL_USE_TLS={{ colander_vault.email_use_tls }}
       - EMAIL_USE_SSL={{ colander_vault.email_use_ssl }}
-      - LICENSE_ENABLED=yes
+      - LICENSE_ENABLED=True
+      - USE_MANDOLIN={{ flavor.use_mandolin }}
+      - USE_CYBERCHEF={{ flavor.use_cyberchef }}
+      - USE_THREATR={{ flavor.use_threatr }}
+      - USE_PLAYWRIGHT={{ flavor.use_playwright }}
   services:
     traefik:
       version: v3.2.2
@@ -52,11 +62,11 @@ stack:
       environment:
         - WATCHTOWER_POLL_INTERVAL=3600
     colander:
-      version: next 
+      version: '{{ stack_overrides.services.colander.version | default("main")}}'
       dot_env_file: .colander
       environment:
         - REDIS_URL=redis://redis:6379/0
-        - DJANGO_SECURE_SSL_REDIRECT=false
+        - DJANGO_SECURE_SSL_REDIRECT=False
         - DJANGO_ACCOUNT_ALLOW_REGISTRATION=False
         - DJANGO_SETTINGS_MODULE=config.settings.production
         - WEB_CONCURRENCY=4
@@ -75,7 +85,7 @@ stack:
         - POSTGRES_USER={{ colander_vault.colander_postgres_user }}
         - POSTGRES_PASSWORD={{ colander_vault.colander_postgres_password }}
     threatr:
-      version: main 
+      version: '{{ stack_overrides.services.threatr.version | default("main")}}'
       dot_env_file: .threatr
       environment:
         - REDIS_URL=redis://redis:6379/0
@@ -97,6 +107,10 @@ stack:
         - POSTGRES_DB=threatr
         - POSTGRES_USER={{ colander_vault.threatr_postgres_user }}
         - POSTGRES_PASSWORD={{ colander_vault.threatr_postgres_password }}
+    mandolin:
+      version: main
+    tika:
+      version: 3.0.0.0-full
     cyberchef:
       version: latest
     playwright:
@@ -105,7 +119,6 @@ stack:
       volumes:
         data: '{{ docker_volumes_path }}/elasticsearch'
       version: 8.4.1
-      xms: 512m
-      xmx: 512m
-
+      xmx: '{{ stack_overrides.services.elasticsearch.xmx | default("2048m")}}'
+      xms: '{{ stack_overrides.services.elasticsearch.xms | default("2048m")}}'
 

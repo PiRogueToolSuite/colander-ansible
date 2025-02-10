@@ -8,4 +8,4 @@
       private: false
 
   roles:
-    - role: configuration_vault
+    - role: configuration

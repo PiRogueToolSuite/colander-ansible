@@ -3,6 +3,6 @@
   become: false
   ansible.builtin.template:
     src: ./templates/vault.yml.j2
-    dest: ./vault.yml
+    dest: '../configuration-vault.yml'
     mode: '0644'
     force: false

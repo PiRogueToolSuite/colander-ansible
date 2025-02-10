@@ -57,6 +57,7 @@ http:
       service: colander
       tls:
         certResolver: letsencrypt
+{% if flavor.use_threatr %}
     web-secure-threatr:
       rule: "Host(`{{ stack.services.traefik.vars.threatr_fqdn }}`)"
       entryPoints:
@@ -67,6 +68,8 @@ http:
       service: threatr
       tls:
         certResolver: letsencrypt
+{% endif %}
+{% if flavor.use_cyberchef %}
     web-secure-cyberchef:
       rule: "Host(`{{ stack.services.traefik.vars.cyberchef_fqdn }}`)"
       entryPoints:
@@ -77,7 +80,7 @@ http:
       service: cyberchef
       tls:
         certResolver: letsencrypt
-
+{% endif %}
   middlewares:
 {% if stack.services.traefik.vars.enable_dashboard %}
     auth:
@@ -99,14 +102,18 @@ http:
       loadBalancer:
         servers:
           - url: http://colander-front:5000
+{% if flavor.use_threatr %}
     threatr:
       loadBalancer:
         servers:
           - url: http://threatr-front:5000
+{% endif %}
+{% if flavor.use_cyberchef %}
     cyberchef:
       loadBalancer:
         servers:
           - url: http://cyberchef:8000
+{% endif %}
 
 providers:
   # https://docs.traefik.io/master/providers/file/
