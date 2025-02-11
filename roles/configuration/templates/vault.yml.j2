@@ -11,16 +11,16 @@
 
 colander_vault:
   # Email
-  acme_email: ""
-  admin_name: ""
-  admin_email: ""
-  django_default_from_email: ""
-  email_host: ""
-  email_host_user: ""
-  email_host_password: ""
-  email_port: ""
-  email_use_tls: ""
-  email_use_ssl: ""
+  acme_email: "{{ lookup('env','ACME_EMAIL') | default('') }}"
+  admin_name: "{{ lookup('env','ADMIN_NAME') | default('') }}"
+  admin_email: "{{ lookup('env','ADMIN_EMAIL') | default('') }}"
+  django_default_from_email: "{{ lookup('env','DJANGO_DEFAULT_FROM_EMAIL') | default('') }}"
+  email_host: "{{ lookup('env','EMAIL_HOST') | default('') }}"
+  email_host_user: "{{ lookup('env','EMAIL_HOST_USER') | default('') }}"
+  email_host_password: "{{ lookup('env','EMAIL_HOST_PASSWORD') | default('') }}"
+  email_port: "{{ lookup('env','EMAIL_PORT') | default('') }}"
+  email_use_tls: "{{ lookup('env','EMAIL_USE_TLS') | default('') }}"
+  email_use_ssl: "{{ lookup('env','EMAIL_USE_SSL') | default('') }}"
 
   # Domains & sub-domains
   root_domain: "{{ root_domain }}"
