@@ -1,0 +1,33 @@
+# Deployment summary
+Your Colander server is managed by Ansible and has been successfuly deployed on `{{ansible_host}}`.
+
+Documentation: https://github.com/PiRogueToolSuite/colander-ansible
+
+## Stack flavor
+```yaml
+{{ flavor | to_nice_yaml }}
+```
+
+## Load balancer
+* Traefik dashboard: {{colander_vault.traefik_base_url}}
+
+The credentials of the administrator are stored in your vault.
+
+## Colander
+* Colander: {{colander_vault.colander_base_url}}
+* Colander admin panel: {{colander_vault.colander_base_url}}/{{colander_vault.colander_django_admin_url}}
+
+The credentials of the administrator are stored in your vault.
+
+{% if flavor.use_threatr %}
+## Threatr
+* Threatr: {{colander_vault.threatr_base_url}}
+* Threatr admin panel: {{colander_vault.threatr_base_url}}/{{colander_vault.threatr_django_admin_url}}
+
+The credentials of the administrator are stored in your vault.
+{% endif %}
+
+{% if flavor.use_cyberchef %}
+## Cyberchef
+* URL: {{colander_vault.cyberchef_base_url}}
+{% endif %}

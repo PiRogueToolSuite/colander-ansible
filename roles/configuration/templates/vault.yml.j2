@@ -36,7 +36,7 @@ colander_vault:
   traefik_fqdn: "traefik.{{ root_domain }}" 
 
   # Traefik
-  traefik_auth_salt: {{ lookup('community.general.random_string', length=22, min_lower=4, min_numeric=4, special=false) }}"
+  traefik_auth_salt: "{{ lookup('community.general.random_string', length=22, min_lower=4, min_numeric=4, special=false) }}"
   traefik_admin_user: "admin"
   traefik_admin_password: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
 

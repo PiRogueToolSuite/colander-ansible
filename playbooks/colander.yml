@@ -1,7 +1,5 @@
 ---
 - name: Configure Colander
-  hosts: target
-  vars_files:
-  - ../configuration-vault.yml
+  hosts: colander
   roles:
     - role: colander

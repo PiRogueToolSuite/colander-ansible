@@ -86,7 +86,7 @@ http:
     auth:
       basicAuth:
         users:
-          - "{{ colander_vault.traefik_admin_user }}:{{ colander_vault.traefik_admin_password | password_hash('bcrypt', rounds=4, salt=colander_vault.traefik_auth_salt) }}"  
+          - "{{ colander_vault.traefik_admin_user }}:{{ colander_vault.traefik_admin_password | ansible.builtin.password_hash('bcrypt', rounds=4, salt=colander_vault.traefik_auth_salt) }}"  
 {% endif %}
     compress-http:
       # https://doc.traefik.io/traefik/middlewares/http/compress/

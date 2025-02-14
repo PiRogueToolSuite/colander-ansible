@@ -9,6 +9,7 @@
   tags: [teardown]
 
 - name: Delete all configuration files
+  become: true
   file:
     path: "{{ item }}"
     state: absent

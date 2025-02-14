@@ -1,8 +1,9 @@
 ---
-- name: Check that at least an A DNS record exists
+- name: Check an A DNS record exists for Colander
   ansible.builtin.assert:
     that:
-      - dig != "A"
+      - dig != ""
+      - dig != "NXDOMAIN"
   vars:
     dig: "{{ lookup('community.general.dig', '{{ colander_vault.colander_fqdn }}') }}"
   tags: [check, configure]
@@ -19,24 +20,40 @@
     - '{{ colander_installation_path }}/compose/postgres'
   tags: configure
 
+- name: Ensures the volume directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - '{{ stack.services.traefik.volumes.config }}'
+    - '{{ stack.services.traefik.volumes.logs }}'
+    - '{{ stack.services.minio.volumes.data }}'
+    - '{{ stack.services.colander_postgres.volumes.data }}'
+    - '{{ stack.services.colander_postgres.volumes.backups }}'
+    - '{{ stack.services.threatr_postgres.volumes.data }}'
+    - '{{ stack.services.threatr_postgres.volumes.backups }}'
+    - '{{ stack.services.elasticsearch.volumes.data }}'
+    - '{{ stack.services.elasticsearch.volumes.snapshots }}'
+  tags: configure
+
 - name: Get current user ID
   ansible.builtin.getent:
     database: passwd
     key: '{{ ansible_user }}'
   when: docker_rootless
-  tags: [configure, deploy, upgrade, teardown]
+  tags: [configure, deploy, update, teardown, stop, restart]
 
 - name: Cache the DOCKER_HOST variable
   ansible.builtin.set_fact:
     docker_host: 'unix:///run/user/{{ getent_passwd[ansible_user][1] }}/docker.sock'
   when: docker_rootless
-  tags: [configure, deploy, upgrade, teardown]
+  tags: [configure, deploy, update, teardown, stop, restart]
 
 - name: Cache the DOCKER_SOCKET_PATH variable
   ansible.builtin.set_fact:
     docker_socket_path: '/run/user/{{ getent_passwd[ansible_user][1] }}/docker.sock'
   when: docker_rootless
-  tags: [configure, deploy, upgrade, teardown]
+  tags: [configure, deploy, update, teardown, stop, restart]
 
 - name: Generate Docker Compose file
   become: false

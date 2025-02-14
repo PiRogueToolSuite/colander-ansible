@@ -4,14 +4,37 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+# Backup locations
+# - colander database: {{ stack.services.colander_postgres.volumes.backups }}
+# - threatr database: {{ stack.services.threatr_postgres.volumes.backups }}
+# - elasticsearch: {{ stack.services.elasticsearch.volumes.data }}/backups
+# - minio: {{ stack.services.minio.volumes.data }}/backups
+
+
 # Backup Postgres databases
 docker compose run --rm colander-postgres backup
 {% if flavor.use_threatr %}
 docker compose run --rm threatr-postgres backup
 {% endif %}
 
+# Backup Minio
+minio_backup_name="minio-$(date +'%Y_%m_%d-%H_%M_%S')"
+minio_volume_path="{{ stack.services.minio.volumes.data }}"
+mkdir -p ${minio_volume_path}/backups
+
+cd ${minio_volume_path}
+tar czvf ${minio_volume_path}/backups/${minio_backup_name}.tgz local-media/
+cd -
+echo "Minio backup '${minio_backup_name}.tgz' has been created and placed in '${minio_volume_path}/backups/'."
+
 # Create ElasticSearch snapshot
+es_backup_name="elasticsearch-$(date +'%Y_%m_%d-%H_%M_%S')"
+es_volume_path="{{ stack.services.elasticsearch.volumes.data }}"
+mkdir -p ${es_volume_path}/backups
+
 docker compose exec -T elasticsearch /bin/bash << EOF
+curl --request DELETE 'http://localhost:9200/_snapshot/snapshots'
+rm -rf /usr/share/elasticsearch/data/snapshots/*
 curl -X PUT http://localhost:9200/_snapshot/snapshots -H "Content-Type: application/json" -d '
  {
     "type": "fs",
@@ -20,5 +43,11 @@ curl -X PUT http://localhost:9200/_snapshot/snapshots -H "Content-Type: applicat
         "compress": true
     }
  }
- '
+'
+curl -X PUT 'http://localhost:9200/_snapshot/snapshots/${es_backup_name}?wait_for_completion=true' 
 EOF
+cd ${es_volume_path}/snapshots/
+tar czf ${es_volume_path}/backups/${es_backup_name}.tgz *
+cd -
+
+echo "Elasticsearch backup '${es_backup_name}.tgz' has been created and placed in '${es_volume_path}/backups/'."

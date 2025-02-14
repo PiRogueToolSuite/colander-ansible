@@ -5,4 +5,5 @@ playbooks/vault.yml
 roles/geerlingguy.docker/
 production.yml
 host_vars/staging_1.yml
-configuration-vault.yml
+configuration-vault*.yml
+group_vars/colander/vault

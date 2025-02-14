@@ -1,22 +1,56 @@
 # {{ ansible_managed }}
 
 volumes:
-  production_traefik: {}
-  production_traefik_logs: {}
-  production_colander_postgres_data: {}
-  production_colander_postgres_data_backups: {}
-{% if flavor.use_threatr %}
-  production_threatr_postgres_data: {}
-  production_threatr_postgres_data_backups: {}
-{% endif %}
-  production_colander_minio_data: {}
-  production_colander_es_data: {}
-  dummy:
+  production_traefik: 
     driver: local
     driver_opts:
       type: none
-      device: {{ docker_volumes_path }}/dummy
-      o: bind
+      device: {{ stack.services.traefik.volumes.config }}
+      o: bind 
+  production_traefik_logs: 
+    driver: local
+    driver_opts:
+      type: none
+      device: {{ stack.services.traefik.volumes.logs }}
+      o: bind 
+  production_colander_postgres_data: 
+    driver: local
+    driver_opts:
+      type: none
+      device: {{ stack.services.colander_postgres.volumes.data }}
+      o: bind 
+  production_colander_postgres_backups: 
+    driver: local
+    driver_opts:
+      type: none
+      device: {{ stack.services.colander_postgres.volumes.backups }}
+      o: bind 
+{% if flavor.use_threatr %}
+  production_threatr_postgres_data: 
+    driver: local
+    driver_opts:
+      type: none
+      device: {{ stack.services.threatr_postgres.volumes.data }}
+      o: bind 
+  production_threatr_postgres_backups: 
+    driver: local
+    driver_opts:
+      type: none
+      device: {{ stack.services.threatr_postgres.volumes.backups }}
+      o: bind 
+{% endif %}
+  production_minio_data: 
+    driver: local
+    driver_opts:
+      type: none
+      device: {{ stack.services.minio.volumes.data }}
+      o: bind 
+  production_es_data: 
+    driver: local
+    driver_opts:
+      type: none
+      device: {{ stack.services.elasticsearch.volumes.data }}
+      o: bind 
 
 networks:
   frontend:
@@ -98,8 +132,8 @@ services:
     networks:
       - backend
     volumes:
-      - production_colander_postgres_data:/var/lib/postgresql/data:Z
-      - production_colander_postgres_data_backups:/backups:z
+      - production_colander_postgres_data:/var/lib/postgresql/data
+      - production_colander_postgres_backups:/backups
     env_file:
       - {{ dot_env_files_dir }}/{{ stack.services.colander_postgres.dot_env_file}}
     labels:
@@ -227,8 +261,8 @@ services:
     networks:
       - backend
     volumes:
-      - production_threatr_postgres_data:/var/lib/postgresql/data:Z
-      - production_threatr_postgres_data_backups:/backups:z
+      - production_threatr_postgres_data:/var/lib/postgresql/data
+      - production_threatr_postgres_backups:/backups
     env_file:
       - {{ dot_env_files_dir }}/{{ stack.services.threatr_postgres.dot_env_file}}
     labels:
@@ -263,8 +297,8 @@ services:
         condition: service_started
 {% endif %}
     volumes:
-      - production_traefik:/etc/traefik/acme:z
-      - production_traefik_logs:/logs/:z
+      - production_traefik:/etc/traefik/acme
+      - production_traefik_logs:/logs/
     ports:
       - "0.0.0.0:80:80"
       - "0.0.0.0:443:443"
@@ -372,7 +406,7 @@ services:
     networks:
       - backend
     volumes:
-      - production_colander_es_data:/usr/share/elasticsearch/data
+      - production_es_data:/usr/share/elasticsearch/data
     healthcheck:
       test: [ "CMD-SHELL", "curl -s -X GET http://localhost:9200/_cluster/health?pretty | grep status | grep -q '\\(green\\|yellow\\)'" ]
       interval: 10s
@@ -394,7 +428,7 @@ services:
   minio:
     image: quay.io/minio/minio:{{stack.services.minio.version}}
     volumes:
-      - production_colander_minio_data:/data
+      - production_minio_data:/data
     command: server /data
     restart: unless-stopped
     logging:

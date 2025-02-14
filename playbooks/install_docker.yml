@@ -1,6 +1,6 @@
 ---
 - name: Install Docker
-  hosts: target
+  hosts: colander
   become: true
   roles:
     - docker

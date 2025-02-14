@@ -1,0 +1,8 @@
+- name: Generate the deployment summary
+  become: false
+  ansible.builtin.template:
+    src: './templates/deployment_summary.md.j2'
+    dest: '{{ colander_installation_path }}/deployment-summary.md'
+    mode: '0644'
+    force: true
+  tags: [deploy]

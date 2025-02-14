@@ -1,17 +1,29 @@
-- name: Stop the whole stack when changes have to be applied
+- name: Stop the whole stack
   community.docker.docker_compose_v2:
     project_src: '{{ colander_installation_path }}'
     docker_host: '{{ docker_host }}'
     state: stopped
-  when: configuration.changed
-  tags: [deploy]
+  tags: [stop]
+
+- name: Restart the whole stack
+  community.docker.docker_compose_v2:
+    project_src: '{{ colander_installation_path }}'
+    docker_host: '{{ docker_host }}'
+    state: restarted
+  tags: [restart]
+
+- name: Update the whole stack
+  community.docker.docker_compose_v2_pull:
+    project_src: '{{ colander_installation_path }}'
+    docker_host: '{{ docker_host }}'
+  tags: [update]
 
 - name: Start the whole stack
   community.docker.docker_compose_v2:
     project_src: '{{ colander_installation_path }}'
     docker_host: '{{ docker_host }}'
     state: present
-  tags: [deploy]
+  tags: [deploy, update]
 
 - name: Create Colander admin user
   community.docker.docker_compose_v2_run:
@@ -51,27 +63,3 @@
     - '"That username is already taken" not in command_result.stderr'
   when: flavor.use_threatr
   tags: [deploy]
-
-# - name: Ensure services are actually down
-#   community.docker.docker_compose_v2:
-#     project_src: '{{ colander_installation_path }}'
-#     docker_host: '{{ docker_host }}'
-#     remove_orphans: true
-#   loop:
-#     - {
-#       services: ['threatr-front', 'threatr-worker', 'threatr-postgres'],
-#       state: "{{ 'present' if flavor.use_threatr else 'absent' }}"
-#     }
-#     - {
-#       services: ['mandolin', 'tika'],
-#       state: "{{ 'present' if flavor.use_mandolin else 'absent' }}"
-#     }
-#     - {
-#       services: ['cyberchef'],
-#       state: "{{ 'present' if flavor.use_cyberchef else 'absent' }}"
-#     }
-#     - {
-#       services: ['playwright'],
-#       state: "{{ 'present' if flavor.use_playwright else 'absent' }}"
-#     }
-#   tags: [deploy]

@@ -43,6 +43,7 @@ stack:
       version: v3.2.2
       volumes:
         config: '{{ docker_volumes_path }}/traefik'
+        logs: '{{ docker_volumes_path }}/traefik-logs'
       vars:
         acme_email: '{{ colander_vault.acme_email }}'
         colander_fqdn: '{{ colander_vault.colander_fqdn }}'
@@ -84,6 +85,9 @@ stack:
         - POSTGRES_DB=colander
         - POSTGRES_USER={{ colander_vault.colander_postgres_user }}
         - POSTGRES_PASSWORD={{ colander_vault.colander_postgres_password }}
+        # Used by pg_ready, see the healthcheck in the docker compose file
+        - PGDATABASE=colander
+        - PGUSER={{ colander_vault.colander_postgres_user }}
     threatr:
       version: '{{ stack_overrides.services.threatr.version | default("main")}}'
       dot_env_file: .threatr
@@ -107,6 +111,9 @@ stack:
         - POSTGRES_DB=threatr
         - POSTGRES_USER={{ colander_vault.threatr_postgres_user }}
         - POSTGRES_PASSWORD={{ colander_vault.threatr_postgres_password }}
+        # Used by pg_ready, see the healthcheck in the docker compose file
+        - PGDATABASE=threatr
+        - PGUSER={{ colander_vault.threatr_postgres_user }}
     mandolin:
       version: main
     tika:
@@ -118,6 +125,7 @@ stack:
     elasticsearch:
       volumes:
         data: '{{ docker_volumes_path }}/elasticsearch'
+        snapshots: '{{ docker_volumes_path }}/elasticsearch-snapshots'
       version: 8.4.1
       xmx: '{{ stack_overrides.services.elasticsearch.xmx | default("2048m")}}'
       xms: '{{ stack_overrides.services.elasticsearch.xms | default("2048m")}}'

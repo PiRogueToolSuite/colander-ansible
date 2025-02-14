@@ -1,10 +1,14 @@
 - include_tasks: configure-colander.yml
   when: use_docker_compose
-  tags: [check, configure, deploy, upgrade, teardown]
+  tags: [check, configure, deploy, update, teardown, stop, restart]
 
 - include_tasks: deploy-colander.yml
   when: use_docker_compose
-  tags: [deploy, upgrade]
+  tags: [deploy, update, stop, restart]
+
+- include_tasks: summarize.yml
+  when: use_docker_compose
+  tags: [deploy]
 
 - include_tasks: teardown-colander.yml
   when: use_docker_compose

@@ -1,11 +1,11 @@
-target:
+colander:
   hosts:
-    production_1:
+    production:
       ansible_host: [IP address of the server]
       ansible_user: colander
       ansible_ssh_private_key_file: [path of your SSH private key]
 
-local_hosts:
+local:
   hosts:
     local:
       ansible_host: 127.0.0.1
