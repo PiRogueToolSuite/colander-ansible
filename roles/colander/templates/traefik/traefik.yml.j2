@@ -38,7 +38,7 @@ http:
   routers:
 {% if stack.services.traefik.vars.enable_dashboard %}
     web-secure-traefik-dashboard:
-      rule: "Host(`{{ colander_vault.traefik_fqdn }}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+      rule: "Host(`{{ stack.services.traefik.vars.traefik_fqdn }}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
       service: api@internal
       entryPoints:
         - web-secure

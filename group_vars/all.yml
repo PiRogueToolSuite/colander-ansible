@@ -1,14 +1,25 @@
+# Install Docker in rootless mode with Docker Compose 
+# (the only mode supported by now)
 docker_rootless: true
 docker_disable_root_daemon: true
 use_docker_compose: true
+# The default Docker socket location when not used in rootless mode
 docker_host: 'unix:///var/run/docker.sock'
 docker_socket_path: '/var/run/docker.sock'
+# Locations of the installation files and Docker volumes 
+# (can be at different locations)
 colander_installation_path: '/home/{{ ansible_user }}/colander'
 docker_volumes_path: '/home/{{ ansible_user }}/colander/volumes'
+# Location of the .env files within the installation directory
 dot_env_files_dir: .envs
+# The template to be used for the generation of the Docker Compose file
 compose_file_template: no-sso.yml.j2
 compose_file: docker-compose.yml
 
+# The "flavor" of the service stack. Administrators can decide to disable 
+# some service either because they will not be used nor because the 
+# server cannot handle the load.
+# The "flavor" can be specifie per host.
 flavor:
   use_mandolin: '{{ stack_overrides.flavor.use_mandolin | default(True)}}'
   use_threatr: '{{ stack_overrides.flavor.use_threatr | default(True)}}'
@@ -18,6 +29,7 @@ flavor:
 stack:
   base:
     dot_env_file: .base
+    # Environment variables that are common to Colander and Threatr
     environment:
       - USE_DOCKER=True
       - COLANDER_BASE_URL={{ colander_vault.colander_base_url }}
@@ -40,7 +52,9 @@ stack:
       - USE_PLAYWRIGHT={{ flavor.use_playwright }}
   services:
     traefik:
+      # The version of Traefik to be deployed 
       version: v3.2.2
+      # The locations of the configuration file and the access logs
       volumes:
         config: '{{ docker_volumes_path }}/traefik'
         logs: '{{ docker_volumes_path }}/traefik-logs'
@@ -49,10 +63,13 @@ stack:
         colander_fqdn: '{{ colander_vault.colander_fqdn }}'
         threatr_fqdn: '{{ colander_vault.threatr_fqdn }}'
         cyberchef_fqdn: '{{ colander_vault.cyberchef_fqdn }}'
+        traefik_fqdn: '{{ colander_vault.traefik_fqdn }}'
         enable_dashboard: true
     minio:
+      # The version of Minio to be deployed 
       version: RELEASE.2022-09-22T18-57-27Z
       dot_env_file: .minio
+      # The location of the files stored in the buckets
       volumes:
         data: '{{ docker_volumes_path }}/minio'
       environment:
@@ -63,6 +80,7 @@ stack:
       environment:
         - WATCHTOWER_POLL_INTERVAL=3600
     colander:
+      # The version of Colander to be deployed 
       version: '{{ stack_overrides.services.colander.version | default("main")}}'
       dot_env_file: .colander
       environment:
@@ -75,6 +93,7 @@ stack:
         - DJANGO_SECRET_KEY={{ colander_vault.colander_django_secret_key }}
         - DJANGO_ADMIN_URL={{ colander_vault.colander_django_admin_url }}
     colander_postgres:
+      # The locations of the database and the backups 
       volumes:
         data: '{{ docker_volumes_path }}/colander-db'
         backups: '{{ docker_volumes_path }}/colander-db-backups'
@@ -85,10 +104,11 @@ stack:
         - POSTGRES_DB=colander
         - POSTGRES_USER={{ colander_vault.colander_postgres_user }}
         - POSTGRES_PASSWORD={{ colander_vault.colander_postgres_password }}
-        # Used by pg_ready, see the healthcheck in the docker compose file
+        # Used by pg_ready, see the healthcheck in the Docker Compose file
         - PGDATABASE=colander
         - PGUSER={{ colander_vault.colander_postgres_user }}
     threatr:
+      # The version of Threatr to be deployed 
       version: '{{ stack_overrides.services.threatr.version | default("main")}}'
       dot_env_file: .threatr
       environment:
@@ -101,6 +121,7 @@ stack:
         - DJANGO_SECRET_KEY={{ colander_vault.threatr_django_secret_key }}
         - DJANGO_ADMIN_URL={{ colander_vault.threatr_django_admin_url }}
     threatr_postgres:
+      # The locations of the database and the backups 
       volumes:
         data: '{{ docker_volumes_path }}/threatr-db'
         backups: '{{ docker_volumes_path }}/threatr-db-backups'
@@ -111,22 +132,30 @@ stack:
         - POSTGRES_DB=threatr
         - POSTGRES_USER={{ colander_vault.threatr_postgres_user }}
         - POSTGRES_PASSWORD={{ colander_vault.threatr_postgres_password }}
-        # Used by pg_ready, see the healthcheck in the docker compose file
+        # Used by pg_ready, see the healthcheck in the Docker Compose file
         - PGDATABASE=threatr
         - PGUSER={{ colander_vault.threatr_postgres_user }}
     mandolin:
+      # The version of Mandolin to be deployed 
       version: main
     tika:
+      # The version of Apache Tika to be deployed 
       version: 3.0.0.0-full
     cyberchef:
+      # The version of Cyberchef to be deployed 
       version: latest
     playwright:
+      # The version of Plawright to be deployed 
       version: main
     elasticsearch:
+      # The locations of the indices and snapshots
       volumes:
         data: '{{ docker_volumes_path }}/elasticsearch'
         snapshots: '{{ docker_volumes_path }}/elasticsearch-snapshots'
+      # The version of Elasticsearch to be deployed 
       version: 8.4.1
+      # The amount of memory to be allocated to ES. This can be specified 
+      # per host. The default value is 2GB.
       xmx: '{{ stack_overrides.services.elasticsearch.xmx | default("2048m")}}'
       xms: '{{ stack_overrides.services.elasticsearch.xms | default("2048m")}}'
 
