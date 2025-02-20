@@ -1,6 +1,7 @@
 ---
 - name: Configure
   hosts: local
+  gather_facts: no
   vars_prompt:
     - name: root_domain
       prompt: Root domain name

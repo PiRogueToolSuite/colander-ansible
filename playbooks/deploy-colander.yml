@@ -1,5 +1,5 @@
 ---
-- name: Configure and deploy Colander
+- name: Deploy Colander
   hosts: colander
   gather_facts: no
   tasks:
@@ -9,9 +9,6 @@
     - include_role:
         name: colander
         tasks_from: docker-info
-    - include_role:
-        name: colander
-        tasks_from: configure
     - include_role:
         name: colander
         tasks_from: deploy

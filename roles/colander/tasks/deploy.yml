@@ -1,29 +1,8 @@
-- name: Stop the whole stack
-  community.docker.docker_compose_v2:
-    project_src: '{{ colander_installation_path }}'
-    docker_host: '{{ docker_host }}'
-    state: stopped
-  tags: [stop]
-
-- name: Restart the whole stack
-  community.docker.docker_compose_v2:
-    project_src: '{{ colander_installation_path }}'
-    docker_host: '{{ docker_host }}'
-    state: restarted
-  tags: [restart]
-
-- name: Update the whole stack
-  community.docker.docker_compose_v2_pull:
-    project_src: '{{ colander_installation_path }}'
-    docker_host: '{{ docker_host }}'
-  tags: [update]
-
 - name: Start the whole stack
   community.docker.docker_compose_v2:
     project_src: '{{ colander_installation_path }}'
     docker_host: '{{ docker_host }}'
     state: present
-  tags: [deploy, update]
 
 - name: Create Colander admin user
   community.docker.docker_compose_v2_run:
@@ -42,7 +21,6 @@
   failed_when: 
     - command_result.rc != 0
     - '"That username is already taken" not in command_result.stderr'
-  tags: [deploy]
 
 - name: Create Threatr admin user
   community.docker.docker_compose_v2_run:
@@ -62,4 +40,3 @@
     - command_result.rc != 0
     - '"That username is already taken" not in command_result.stderr'
   when: flavor.use_threatr
-  tags: [deploy]

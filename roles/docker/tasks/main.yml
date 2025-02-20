@@ -14,6 +14,9 @@
       - gnupg
       - software-properties-common
       - python3-docker
+      - git
+      - vim
+      - jq
 
 - name: Install docker
   ansible.builtin.include_role:

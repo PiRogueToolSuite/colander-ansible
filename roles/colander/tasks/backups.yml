@@ -1,0 +1,13 @@
+- name: Find existing backups
+  ansible.builtin.find:
+    paths: '{{ docker_backup_path }}'
+    recurse: no
+    file_type: directory
+  register: found_backups
+
+- ansible.builtin.set_fact:
+    available_backups: "{{ found_backups.files | map(attribute='path') | map('basename') | list }}"
+
+- name: List existing backups
+  ansible.builtin.debug:
+    var: available_backups

@@ -1,0 +1,12 @@
+- name: Start the whole stack
+  community.docker.docker_compose_v2:
+    project_src: '{{ colander_installation_path }}'
+    docker_host: '{{ docker_host }}'
+    state: present
+
+- name: Run the backup script
+  ansible.builtin.command: '{{ colander_installation_path }}/scripts/backup'
+  register: logs
+
+- ansible.builtin.debug:
+    msg: '{{ logs.stdout_lines }}'

@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+backup_storage_path="{{ docker_backup_path }}"
+backup_dir="${backup_storage_path}/${1}"
+
+if [[ -z ${1+x} ]]; then
+    echo -e "\e[31mERROR\e[0m Backup filename is not specified yet it is a required parameter. Make sure you provide one and try again (e.g., 2025_02_20-14_53_32)."
+    exit 1
+fi
+if [[ ! -d "${backup_dir}" ]]; then
+    echo -e "\e[31mERROR\e[0m No backup with the specified filename found. Check out the 'backup' maintenance script."
+    exit 1
+fi
+
+# Check all required backup files exist
+if [ -z "$( ls -A '${backup_dir}/${1}/colander-db' )" ]; then
+    echo -e "\e[31mERROR\e[0m No backup found for colander-db."
+    exit 1
+fi
+
+{% if flavor.use_threatr %}
+if [ -z "$( ls -A '${backup_dir}/${1}/threatr-db' )" ]; then
+    echo -e "\e[31mERROR\e[0m No backup found for threatr-db."
+    exit 1
+fi
+{% endif %}
+
+if [ -z "$( ls -A '${backup_dir}/${1}/minio' )" ]; then
+    echo -e "\e[31mERROR\e[0m No backup found for minio."
+    exit 1
+fi
+
+if [ -z "$( ls -A '${backup_dir}/${1}/elasticsearch' )" ]; then
+    echo -e "\e[31mERROR\e[0m No backup found for elasticsearch."
+    exit 1
+fi
+
+
+# Restore Postgres databases
+colander_db_volume_path="{{ stack.services.colander_postgres.volumes.backups }}"
+rm -rf ${colander_db_volume_path}/*
+cp ${backup_dir}/colander-db/* ${colander_db_volume_path}/
+backup_file=$(ls -t ${backup_dir}/${1}/colander-db/*.gz | head -n1)
+backup_filename=$(basename -- "${backup_file}")
+docker compose -f "{{ colander_installation_path }}/{{ compose_file }}" run --rm colander-postgres restore ${backup_filename}
+rm -rf ${colander_db_volume_path}/*
+
+{% if flavor.use_threatr %}
+threatr_db_volume_path="{{ stack.services.threatr_postgres.volumes.backups }}"
+rm -rf ${threatr_db_volume_path}/*
+cp ${backup_dir}/threatr-db/* ${threatr_db_volume_path}/
+backup_file=$(ls -t ${backup_dir}/${1}/threatr-db/*.gz | head -n1)
+backup_filename=$(basename -- "${backup_file}")
+docker compose -f "{{ colander_installation_path }}/{{ compose_file }}" run --rm threatr-postgres restore ${backup_filename}
+rm -rf ${threatr_db_volume_path}/*
+{% endif %}
+
+# Restore Minio
+backup_file=$(ls -t ${backup_dir}/${1}/minio/*.tgz | head -n1)
+tar xzf ${backup_file}  "{{ stack.services.minio.volumes.data }}/"
+
+# Restore Elasticsearch
+snapshot_name=$(jq '.snapshots[0].name' ${backup_dir}/${1}/elasticsearch/index-0)
+backup_file=$(ls -t ${backup_dir}/${1}/elasticsearch/*.tgz | head -n1)
+es_volume_path="{{ stack.services.elasticsearch.volumes.data }}/snapshots/"
+rm -rf ${es_volume_path}/*
+tar xzf ${backup_file}  ${es_volume_path}/snapshots/
+docker compose -f "{{ colander_installation_path }}/{{ compose_file }}" exec -T elasticsearch /bin/bash << EOF
+curl -s -X POST http://localhost:9200/_snapshot/snapshots/${snapshot_name}/_restore
+EOF

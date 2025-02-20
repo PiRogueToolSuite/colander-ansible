@@ -1,0 +1,5 @@
+- name: Restart the whole stack
+  community.docker.docker_compose_v2:
+    project_src: '{{ colander_installation_path }}'
+    docker_host: '{{ docker_host }}'
+    state: restarted

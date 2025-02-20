@@ -1,0 +1,50 @@
+---
+- name: Check the Docker configuration
+  ansible.builtin.assert:
+    that:
+      - use_docker_compose == true
+      - docker_rootless == true
+    fail_msg: "The configuration of Docker is inconsistent"
+
+- name: Check an A DNS record exists for Colander
+  ansible.builtin.assert:
+    that:
+      - dig != ""
+      - dig != "NXDOMAIN"
+    fail_msg: "No A DNS record has been found for Colander"
+    success_msg: "Found the A DNS record '{{dig}}' for the domain {{ colander_vault.colander_fqdn }}"
+  vars:
+    dig: "{{ lookup('community.general.dig', '{{ colander_vault.colander_fqdn }}/A', fail_on_error=true) }}"
+
+- name: Check an A DNS record exists for Threatr
+  ansible.builtin.assert:
+    that:
+      - dig != ""
+      - dig != "NXDOMAIN"
+    fail_msg: "No A DNS record has been found for Threatr"
+    success_msg: "Found the A DNS record '{{dig}}' for the domain {{ colander_vault.threatr_fqdn }}"
+  vars:
+    dig: "{{ lookup('community.general.dig', '{{ colander_vault.threatr_fqdn }}', fail_on_error=true) }}"
+  when: flavor.use_threatr
+
+- name: Check an A DNS record exists for Cyberchef
+  ansible.builtin.assert:
+    that:
+      - dig != ""
+      - dig != "NXDOMAIN"
+    fail_msg: "No A DNS record has been found for Cyberchef"
+    success_msg: "Found the A DNS record '{{dig}}' for the domain {{ colander_vault.cyberchef_fqdn }}"
+  vars:
+    dig: "{{ lookup('community.general.dig', '{{ colander_vault.cyberchef_fqdn }}', fail_on_error=true) }}"
+  when: flavor.use_cyberchef
+
+- name: Check an A DNS record exists for Traefik dashboard
+  ansible.builtin.assert:
+    that:
+      - dig != ""
+      - dig != "NXDOMAIN"
+    fail_msg: "No A DNS record has been found for the Traefik dashboard"
+    success_msg: "Found the A DNS record '{{dig}}' for the domain {{ colander_vault.traefik_fqdn }}"
+  vars:
+    dig: "{{ lookup('community.general.dig', '{{ colander_vault.traefik_fqdn }}', fail_on_error=true) }}"
+  when: stack.services.traefik.vars.enable_dashboard

@@ -10,6 +10,7 @@ docker_socket_path: '/var/run/docker.sock'
 # (can be at different locations)
 colander_installation_path: '/home/{{ ansible_user }}/colander'
 docker_volumes_path: '/home/{{ ansible_user }}/colander/volumes'
+docker_backup_path: '/home/{{ ansible_user }}/colander/backups'
 # Location of the .env files within the installation directory
 dot_env_files_dir: .envs
 # The template to be used for the generation of the Docker Compose file

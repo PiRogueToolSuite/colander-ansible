@@ -1,13 +1,4 @@
 ---
-- name: Check an A DNS record exists for Colander
-  ansible.builtin.assert:
-    that:
-      - dig != ""
-      - dig != "NXDOMAIN"
-  vars:
-    dig: "{{ lookup('community.general.dig', '{{ colander_vault.colander_fqdn }}') }}"
-  tags: [check, configure]
-
 - name: Ensures the installation dir exists
   file:
     path: "{{ item }}"
@@ -15,10 +6,11 @@
   loop:
     - '{{ colander_installation_path }}'
     - '{{ docker_volumes_path }}'
+    - '{{ docker_backup_path }}'
     - '{{ colander_installation_path }}/.envs'
+    - '{{ colander_installation_path }}/scripts'
     - '{{ colander_installation_path }}/compose/traefik'
     - '{{ colander_installation_path }}/compose/postgres'
-  tags: configure
 
 - name: Ensures the volume directories exist
   file:
@@ -33,27 +25,6 @@
     - '{{ stack.services.threatr_postgres.volumes.data }}'
     - '{{ stack.services.threatr_postgres.volumes.backups }}'
     - '{{ stack.services.elasticsearch.volumes.data }}'
-    - '{{ stack.services.elasticsearch.volumes.snapshots }}'
-  tags: configure
-
-- name: Get current user ID
-  ansible.builtin.getent:
-    database: passwd
-    key: '{{ ansible_user }}'
-  when: docker_rootless
-  tags: [configure, deploy, update, teardown, stop, restart]
-
-- name: Cache the DOCKER_HOST variable
-  ansible.builtin.set_fact:
-    docker_host: 'unix:///run/user/{{ getent_passwd[ansible_user][1] }}/docker.sock'
-  when: docker_rootless
-  tags: [configure, deploy, update, teardown, stop, restart]
-
-- name: Cache the DOCKER_SOCKET_PATH variable
-  ansible.builtin.set_fact:
-    docker_socket_path: '/run/user/{{ getent_passwd[ansible_user][1] }}/docker.sock'
-  when: docker_rootless
-  tags: [configure, deploy, update, teardown, stop, restart]
 
 - name: Generate Docker Compose file
   become: false
@@ -63,7 +34,6 @@
     mode: '0644'
     force: true
   register: configuration
-  tags: [configure, deploy]
 
 - name: Copy Postgres scripts
   become: false
@@ -71,16 +41,22 @@
     src: './files/postgres'
     dest: '{{ colander_installation_path }}/compose/'
     force: true
-  tags: configure
 
 - name: Copy backup script
   become: false
   ansible.builtin.template:
-    src: './templates/backup.j2'
-    dest: '{{ colander_installation_path }}/backup'
+    src: './templates/scripts/backup.j2'
+    dest: '{{ colander_installation_path }}/scripts/backup'
     force: true
     mode: 0744
-  tags: configure
+
+- name: Copy restore script
+  become: false
+  ansible.builtin.template:
+    src: './templates/scripts/restore.j2'
+    dest: '{{ colander_installation_path }}/scripts/restore'
+    force: true
+    mode: 0744
 
 - name: Generate services configuration
   become: false
@@ -102,7 +78,6 @@
       src: './templates/postgres/Dockerfile.j2',
       dest: '{{ colander_installation_path }}/compose/postgres/Dockerfile'
     }
-  tags: configure
 
 - name: Generate .env files
   become: false
@@ -118,5 +93,4 @@
     - '{{ stack.services.colander_postgres }}'
     - '{{ stack.services.threatr }}'
     - '{{ stack.services.threatr_postgres }}'
-  tags: configure
 
