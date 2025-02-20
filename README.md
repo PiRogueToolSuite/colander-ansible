@@ -15,10 +15,7 @@ License: GPLv3
 </div>
 
 
-💻: indicates the commands must be executed on your laptop (Ansible control node)
-📦: indicates the commands must be executed on your server
-
-# 💻 Deployment procedure
+# Deployment procedure
 The first step is to clone this repository on your laptop (Ansible control node), not on the server. 
 ```
 git clone https://github.com/PiRogueToolSuite/colander-ansible.git
@@ -31,7 +28,18 @@ git pull origin main
 
 All commands starting with `ansible` must be executed on your laptop.
 
-## 💻 Set up your Ansible control node
+
+## Initial setup of your server 
+The latest version Debian must have been installed on your server before you start the deployment. 
+
+Before running Ansible playbooks to install Colander, you must create a user `colander` on your server. Run the following commands on your server:
+```
+useradd -m colander --shell /bin/bash
+usermod -aG sudo colander
+passwd colander
+```
+
+## Set up your Ansible control node
 To make things easier, we recommend copying the SSH key of the user `colander` on your server. 
 
 On your [Ansible control node](https://docs.ansible.com/ansible/latest/getting_started/basic_concepts.html#control-node), run the command to copy it:
@@ -48,7 +56,7 @@ ansible-galaxy install -r requirements.yml
 ```
 
 
-## 💻 Create your Ansible inventory file
+## Create your Ansible inventory file
 Your inventory file specifies the server on which Colander will be deployed. Rename the file `production-example.yml` to `production.yml` and replace:
 * `[IP address of the server]` with the IP address of your server
 * `[path of your SSH private key]` with the path of your SSH private key
@@ -78,18 +86,8 @@ stack_overrides:
       xmx: 512m
 ```
 
-## Initial setup of your server 
-The latest version Debian must have been installed on your server before you start the deployment. 
 
-### 📦 Create a user for Colander
-Before running Ansible playbooks to install Colander, you must create a user `colander` on your server. Run the following commands on your server:
-```
-useradd -m colander --shell /bin/bash
-usermod -aG sudo colander
-passwd colander
-```
-
-### 💻 Install Docker
+### Install Docker
 Then, it's necessary to install Docker on your server with the playbook `install-docker`:
 ```
 ansible-playbook -K -i production.yml playbooks/install-docker.yml
@@ -98,7 +96,7 @@ ansible-playbook -K -i production.yml playbooks/install-docker.yml
 Ansible will ask you to enter the *BECOME password* which corresponds to the password of the user *colander* you have created. The playbook installs Docker in the [rootless mode](https://docs.docker.com/engine/security/rootless/).
 
 
-## 💻 Generate the configuration of Colander
+## Generate the configuration of Colander
 Before deploying Colander on your server, you must generate its configuration. The generated file contains all the secrets of your Colander server. Most of the secrets are randomly generated.
 
 To generate the configuration, run the command on your laptop:
@@ -141,7 +139,7 @@ As an example, if your domain is `my.domain` and the public IP address of your s
 You are now ready to deploy Colander on your server 🎉
 
 
-## 💻 Deploy Colander
+## Deploy Colander
 You can now deploy Colander on your server. The playbook `colander` configures and deploys for you:
 ```
 ansible-playbook -J -i production.yml playbooks/colander.yml
@@ -178,7 +176,7 @@ The values are defined in the Docker Compose file installed on the server.
 All authentication failures are logged in `journald` with a fixed format:
 `<date> <hostname> <container>: ERROR <date> signals 19 <timestamp> COLANDER_AUTH_FAILURE username:[<user>] email:[<email address>] ip:[<IP address of the client>] datetime:[<date>] routable:[<True if the IP address is public, False otherwise>]`
 
-## 💻 Backups
+## Backups
 A *bash* script is automatically installed in `/home/colander/colander/scripts`, when called, it creates:
 * a dump of Colander database
 * a dump of Threatr database (if deployed)
@@ -209,7 +207,7 @@ You are free to use your favorite backup tool to schedule them according to your
 Alternatively, you can create an archive of all Docker volumes after shutting down the whole stack. 
 
 
-## 💻 Tear down Colander
+## Tear down Colander
 If you want to completely uninstall Colander, run the playbook `teardown-colander.yml`. All containers, volumes, images, data, backups, configuration files will be permanently deleted. This action cannot be reverted.
 
 ```
