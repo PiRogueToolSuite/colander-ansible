@@ -37,7 +37,7 @@
   become: false
   ansible.builtin.shell: dockerd-rootless-setuptool.sh install
   args:
-    creates: /home/{{ ansible_user }}/.config/systemd/user/docker.service
+    creates: '/home/{{ ansible_user }}/.config/systemd/user/docker.service'
   when: docker_rootless
 
 - name: 'Set capabilities for rootlesskit'
@@ -57,23 +57,23 @@
     reload: true
   when: docker_rootless
 
-- name: Create docker.service.d directory
+- name: 'Create docker.service.d directory'
   ansible.builtin.file:
     path: '/home/{{ ansible_user }}/.config/systemd/user/docker.service.d/'
     state: directory
-    owner: {{ ansible_user }}
-    group: {{ ansible_user }}
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
     mode: 0755
   when: docker_rootless
 
-- name: Override docker service
+- name: 'Override docker service'
   # https://github.com/rootless-containers/rootlesskit/blob/v2.0.0/docs/network.md
   # https://github.com/rootless-containers/rootlesskit/blob/v2.0.0/docs/port.md
   ansible.builtin.copy:
     src: files/systemd_docker_override.conf
     dest: '/home/{{ ansible_user }}/.config/systemd/user/docker.service.d/override.conf'
-    owner: {{ ansible_user }}
-    group: {{ ansible_user }}
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
     mode: 0644
   when: docker_rootless
 
@@ -88,7 +88,7 @@
 
 - name: 'Enable linger'
   become: true
-  ansible.builtin.shell: loginctl enable-linger {{ ansible_user }}
+  ansible.builtin.shell: 'loginctl enable-linger {{ ansible_user }}'
   when: docker_rootless
 
 - name: 'Get current user ID'
@@ -100,7 +100,7 @@
 - name: 'Add export for path'
   become: false
   ansible.builtin.lineinfile:
-    path: /home/{{ ansible_user }}/.bashrc
+    path: '/home/{{ ansible_user }}/.bashrc'
     line: export path=/usr/bin:$PATH
     create: yes
   when: docker_rootless
@@ -113,7 +113,7 @@
 - name: 'Add export for DOCKER_HOST'
   become: false
   ansible.builtin.lineinfile:
-    path: /home/{{ ansible_user }}/.bashrc
-    line: export DOCKER_HOST={{ docker_host }}
+    path: '/home/{{ ansible_user }}/.bashrc'
+    line: 'export DOCKER_HOST={{ docker_host }}'
     create: yes
   when: docker_rootless
