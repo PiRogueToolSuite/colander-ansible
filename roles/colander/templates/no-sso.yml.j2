@@ -329,6 +329,27 @@ services:
       colander.service.name: tika
       colander.service.type: backend
 
+  clamav:
+    mem_reservation: 262144000
+    mem_limit: 1048576000
+    image: ajilaag/clamav-rest
+    restart: unless-stopped
+    logging:
+      driver: journald
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    healthcheck:
+      test: [ "CMD", "wget", "-O", "/dev/null", "http://localhost:9000/" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: clamav 
+      colander.service.type: backend
+
   mandolin:
     image: ghcr.io/piroguetoolsuite/mandolin:{{stack.services.mandolin.version}}
     restart: unless-stopped
@@ -339,6 +360,8 @@ services:
     networks:
       - backend
     depends_on:
+      clamav:
+        condition: service_healthy
       tika:
         condition: service_healthy
     healthcheck:
@@ -348,6 +371,7 @@ services:
       retries: 3
     environment:
       - TIKA_URL=http://tika:9998/
+      - CLAMAV_URL=http://clamav:9000/
       - MAX_FILE_SIZE=250000000  # 250MB
     labels:
       com.centurylinklabs.watchtower.enable: true
