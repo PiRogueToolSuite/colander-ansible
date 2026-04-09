@@ -340,11 +340,15 @@ services:
         labels: colander.service.name,colander.service.type
     networks:
       - backend
+      - frontend
     healthcheck:
-      test: [ "CMD", "wget", "-O", "/dev/null", "http://localhost:9000/" ]
-      interval: 30s
-      timeout: 20s
-      retries: 3
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:9000/"]
+      interval: 60s
+      timeout: 2s
+      retries: 2
+      # ClamAV and the virus DB load can take a while on cold start, so allow extra startup time
+      # before Compose starts counting healthcheck failures against the container.
+      start_period: 210s
     labels:
       com.centurylinklabs.watchtower.enable: true
       colander.service.name: clamav 
@@ -361,7 +365,7 @@ services:
       - backend
     depends_on:
       clamav:
-        condition: service_healthy
+        condition: service_started
       tika:
         condition: service_healthy
     healthcheck:
