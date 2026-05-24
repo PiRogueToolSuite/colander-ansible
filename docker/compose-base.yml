@@ -1,0 +1,60 @@
+networks:
+  backend:
+    driver: bridge
+
+services:
+  # ----------------------------
+  # Elasticsearch
+  # ----------------------------
+  elasticsearch:
+    image: "elasticsearch:${ELASTICSEARCH_IMAGE_VERSION:-latest}"
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    volumes:
+      - ${ELASTICSEARCH_VOLUME_PATH:-./data/elasticsearch}:/usr/share/elasticsearch/data
+      # - production_es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s -X GET http://localhost:9200/_cluster/health?pretty | grep status | grep -q '\\(green\\|yellow\\)'" ]
+      interval: 10s
+      timeout: 10s
+      retries: 24
+    environment:
+      - logger.level=WARN
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - path.repo=/usr/share/elasticsearch/data/snapshots
+      - ES_JAVA_OPTS=-Xms${ELASTICSEARCH_ES_JAVA_OPTS_XMS:-2048m} -Xmx${ELASTICSEARCH_ES_JAVA_OPTS_XMX:-2048m}
+    labels:
+      colander.service.name: elasticsearch
+      colander.service.type: database
+
+  # ----------------------------
+  # Redis
+  # ----------------------------
+  redis:
+    image: "redis:${REDIS_IMAGE_VERSION:-latest}"
+    restart: unless-stopped
+    logging:
+      driver: journald
+      options:
+        labels: colander.service.name,colander.service.type
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 2s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+    # https://hub.docker.com/_/redis#start-with-persistent-storage
+    volumes:
+      - ${REDIS_VOLUME_PATH:-./data/redis}:/data 
+    command: "redis-server --save 60 1"
+    labels:
+      colander.service.name: redis
+      colander.service.type: database
+
