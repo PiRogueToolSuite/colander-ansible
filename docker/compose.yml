@@ -1,4 +1,5 @@
 include:
+  - "compose-base.yml"
   - "compose-colander.yml"
   - "compose-threatr.yml"
 
@@ -7,18 +8,18 @@ include:
 # {{ ansible_managed }}
 
 volumes:
-  production_traefik: 
-    driver: local
-    driver_opts:
-      type: none
-      device: "{{ stack.services.traefik.volumes.config }}"
-      o: bind 
-  production_traefik_logs: 
-    driver: local
-    driver_opts:
-      type: none
-      device: "{{ stack.services.traefik.volumes.logs }}"
-      o: bind 
+  # production_traefik: 
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     device: "{{ stack.services.traefik.volumes.config }}"
+  #     o: bind 
+  # production_traefik_logs: 
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     device: "{{ stack.services.traefik.volumes.logs }}"
+  #     o: bind 
   production_colander_postgres_data: 
     driver: local
     driver_opts:
@@ -52,260 +53,7 @@ volumes:
       device: "{{ stack.services.minio.volumes.data }}"
       o: bind 
 
-networks:
-  frontend:
-  # backend:
-  #   driver: bridge
-
 services:
-  # ----------------------------
-  # Colander
-  # ----------------------------
-  # Web front 
-  colander-front:
-    image: "ghcr.io/piroguetoolsuite/colander:{{stack.services.colander.version}}"
-    restart: unless-stopped
-    logging:
-      driver: journald
-      options:
-        labels: colander.service.name,colander.service.type
-    healthcheck:
-      test: [ "CMD", "grep", "-q", ":1388", "/proc/net/tcp" ]
-      interval: 30s
-      timeout: 2s
-      retries: 5
-    networks:
-      - backend
-    depends_on:
-      colander-postgres:
-        condition: service_healthy
-      colander-worker:
-        condition: service_started
-      elasticsearch:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-# {% if flavor.use_threatr %}
-      threatr-front:
-        condition: service_started
-# {% endif %}
-# {% if flavor.use_mandolin %}
-      mandolin:
-        condition: service_healthy
-# {% endif %}
-# {% if flavor.use_playwright %}
-      playwright:
-        condition: service_started
-# {% endif %}
-# {% if flavor.use_cyberchef %}
-      cyberchef:
-        condition: service_started
-# {% endif %}
-    command: /start
-    env_file:
-      - "{{ dot_env_files_dir }}/{{ stack.base.dot_env_file}}"
-      - "{{ dot_env_files_dir }}/{{ stack.services.minio.dot_env_file}}"
-      - "{{ dot_env_files_dir }}/{{ stack.services.colander.dot_env_file}}"
-      - "{{ dot_env_files_dir }}/{{ stack.services.colander_postgres.dot_env_file}}"
-    labels:
-      com.centurylinklabs.watchtower.enable: true
-      colander.service.name: colander-front
-      colander.service.type: web
-
-  # Database
-  colander-postgres:
-    build:
-      context: .
-      dockerfile: ./compose/postgres/Dockerfile
-    restart: unless-stopped
-    logging:
-      driver: journald
-      options:
-        labels: colander.service.name,colander.service.type
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - backend
-    volumes:
-      - production_colander_postgres_data:/var/lib/postgresql/data
-      - production_colander_postgres_backups:/backups
-    env_file:
-      - "{{ dot_env_files_dir }}/{{ stack.services.colander_postgres.dot_env_file}}"
-    labels:
-      colander.service.name: colander-postgres
-      colander.service.type: database
-
-  # Workers
-  colander-worker:
-    image: ghcr.io/piroguetoolsuite/colander:{{stack.services.colander.version}}
-    restart: unless-stopped
-    logging:
-      driver: journald
-      options:
-        labels: colander.service.name,colander.service.type
-    networks:
-      - backend
-    depends_on:
-      colander-postgres:
-        condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-# {% if flavor.use_mandolin %}
-      mandolin:
-        condition: service_healthy
-# {% endif %}
-# {% if flavor.use_playwright %}
-      playwright:
-        condition: service_started
-# {% endif %}
-    command: /start-worker
-    env_file:
-      - "{{ dot_env_files_dir }}/{{ stack.base.dot_env_file}}"
-      - "{{ dot_env_files_dir }}/{{ stack.services.minio.dot_env_file}}"
-      - "{{ dot_env_files_dir }}/{{ stack.services.colander.dot_env_file}}"
-      - "{{ dot_env_files_dir }}/{{ stack.services.colander_postgres.dot_env_file}}"
-    labels:
-      com.centurylinklabs.watchtower.enable: true
-      colander.service.name: colander-worker
-      colander.service.type: worker
-
-  # ----------------------------
-  # Threatr: {{ flavor.use_threatr }}
-  # ----------------------------
-# {% if flavor.use_threatr %}
-  # Web front 
-  threatr-front:
-    image: "ghcr.io/piroguetoolsuite/threatr:{{stack.services.threatr.version}}"
-    restart: unless-stopped
-    logging:
-      driver: journald
-      options:
-        labels: colander.service.name,colander.service.type
-    healthcheck:
-      test: [ "CMD", "grep", "-q", ":1388", "/proc/net/tcp" ]
-      interval: 30s
-      timeout: 2s
-      retries: 5
-    networks:
-      - backend
-    depends_on:
-      threatr-postgres:
-        condition: service_healthy
-      threatr-worker:
-        condition: service_started
-      elasticsearch:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    command: /start
-    env_file:
-      - "{{ dot_env_files_dir }}/{{ stack.base.dot_env_file}}"
-      - "{{ dot_env_files_dir }}/{{ stack.services.threatr.dot_env_file}}"
-      - "{{ dot_env_files_dir }}/{{ stack.services.threatr_postgres.dot_env_file}}"
-    labels:
-      com.centurylinklabs.watchtower.enable: true
-      colander.service.name: threatr-front
-      colander.service.type: web
-
-  # Workers
-  threatr-worker:
-    image: "ghcr.io/piroguetoolsuite/threatr:{{stack.services.threatr.version}}"
-    restart: unless-stopped
-    logging:
-      driver: journald
-      options:
-        labels: colander.service.name,colander.service.type
-    networks:
-      - backend
-    depends_on:
-      threatr-postgres:
-        condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    command: /start-worker
-    env_file:
-      - "{{ dot_env_files_dir }}/{{ stack.base.dot_env_file}}"
-      - "{{ dot_env_files_dir }}/{{ stack.services.threatr.dot_env_file}}"
-      - "{{ dot_env_files_dir }}/{{ stack.services.threatr_postgres.dot_env_file}}"
-    labels:
-      com.centurylinklabs.watchtower.enable: true
-      colander.service.name: threatr-worker
-      colander.service.type: worker
-
-  # Database
-  threatr-postgres:
-    build:
-      context: .
-      dockerfile: ./compose/postgres/Dockerfile
-    restart: unless-stopped
-    logging:
-      driver: journald
-      options:
-        labels: colander.service.name,colander.service.type
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - backend
-    volumes:
-      - production_threatr_postgres_data:/var/lib/postgresql/data
-      - production_threatr_postgres_backups:/backups
-    env_file:
-      - "{{ dot_env_files_dir }}/{{ stack.services.threatr_postgres.dot_env_file}}"
-    labels:
-      colander.service.name: threatr-postgres
-      colander.service.type: database
-# {% endif %}
-
-  # ----------------------------
-  # Load balancers - Reverse proxy
-  # ----------------------------
-  traefik:
-    build:
-      context: .
-      dockerfile: ./compose/traefik/Dockerfile
-    restart: unless-stopped
-    logging:
-      driver: journald
-      options:
-        labels: colander.service.name,colander.service.type
-    networks:
-      - frontend
-      - backend
-    depends_on:
-      colander-front:
-        condition: service_healthy
-# {% if flavor.use_threatr %}
-      threatr-front:
-        condition: service_healthy
-# {% endif %}
-# {% if flavor.use_cyberchef %}
-      cyberchef:
-        condition: service_started
-# {% endif %}
-    volumes:
-      - production_traefik:/etc/traefik/acme
-      - production_traefik_logs:/logs/
-    ports:
-      - "0.0.0.0:80:80"
-      - "0.0.0.0:443:443"
-    labels:
-      colander.service.name: traefik
-      colander.service.type: proxy
-
   # ----------------------------
   # Mandolin: {{ flavor.use_mandolin }}
   # ----------------------------
@@ -314,7 +62,7 @@ services:
     image: apache/tika:{{stack.services.tika.version}}
     restart: unless-stopped
     logging:
-      driver: journald
+      driver: "${LOG_DRIVER:-json-file}"
       options:
         labels: colander.service.name,colander.service.type
     networks:
@@ -335,7 +83,7 @@ services:
     image: ajilaag/clamav-rest
     restart: unless-stopped
     logging:
-      driver: journald
+      driver: "${LOG_DRIVER:-json-file}"
       options:
         labels: colander.service.name,colander.service.type
     networks:
@@ -358,7 +106,7 @@ services:
     image: ghcr.io/piroguetoolsuite/mandolin:{{stack.services.mandolin.version}}
     restart: unless-stopped
     logging:
-      driver: journald
+      driver: "${LOG_DRIVER:-json-file}"
       options:
         labels: colander.service.name,colander.service.type
     networks:
@@ -391,7 +139,7 @@ services:
     image: "mpepping/cyberchef:{{stack.services.cyberchef.version}}"
     restart: unless-stopped
     logging:
-      driver: journald
+      driver: "${LOG_DRIVER:-json-file}"
       options:
         labels: colander.service.name,colander.service.type
     networks:
@@ -410,7 +158,7 @@ services:
     image: "ghcr.io/piroguetoolsuite/playwright-rest-api:{{stack.services.playwright.version}}"
     restart: unless-stopped
     logging:
-      driver: journald
+      driver: "${LOG_DRIVER:-json-file}"
       options:
         labels: colander.service.name,colander.service.type
     networks:
@@ -422,31 +170,6 @@ services:
 # {% endif %}
 
 
-  # ----------------------------
-  # Minio
-  # ----------------------------
-  minio:
-    image: "quay.io/minio/minio:{{stack.services.minio.version}}"
-    volumes:
-      - production_minio_data:/data
-    command: server /data
-    restart: unless-stopped
-    logging:
-      driver: journald
-      options:
-        labels: colander.service.name,colander.service.type
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-    networks:
-      - backend
-    env_file:
-      - "{{ dot_env_files_dir }}/{{ stack.services.minio.dot_env_file}}"
-    labels:
-      colander.service.name: minio
-      colander.service.type: storage
 
   # ----------------------------
   # Watchtower
@@ -455,7 +178,7 @@ services:
     image: "containrrr/watchtower:{{stack.services.watchtower.version}}"
     restart: unless-stopped
     logging:
-      driver: journald
+      driver: "${LOG_DRIVER:-json-file}"
       options:
         labels: colander.service.name,colander.service.type
     networks:

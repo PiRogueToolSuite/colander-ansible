@@ -1,0 +1,9 @@
+include:
+  # - compose-base.yml
+  - compose-colander.yml
+  # - "compose.yml"
+services:
+  # traefik dashboard: http://traefik.local:8080/dashboard/
+  traefik:
+    ports:
+      - 0.0.0.0:8080:8080

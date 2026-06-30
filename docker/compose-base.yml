@@ -1,8 +1,71 @@
 networks:
+  frontend:
   backend:
     driver: bridge
 
+volumes:
+  elasticsearch_data:
+    # driver: local
+    # driver_opts:
+    #   type: none
+    #   device: "./data/elasticsearch"
+    #   o: bind
+
 services:
+  # ----------------------------
+  # Load balancers - Reverse proxy
+  # ----------------------------
+  traefik:
+    build:
+      context: .
+      dockerfile: ./compose/traefik/Dockerfile
+      args:
+        # - TRAEFIK_IMAGE_VERSION=v3.2.2
+          - TRAEFIK_IMAGE_VERSION=${TRAEFIK_IMAGE_VERSION:-latest}
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - frontend
+      - backend
+#     depends_on:
+# # {% if flavor.use_cyberchef %}
+#       # cyberchef:
+#       #   condition: service_started
+# # {% endif %}
+    environment:
+      TRAEFIK_DASHBOARD_FQDN: "${TRAEFIK_DASHBOARD_FQDN:-traefik.local}"
+      COLANDER_FQDN: "${COLANDER_FQDN:-colander.local}"
+      THREATR_FQDN: "${THREATR_FQDN:-threatr.local}"
+      CYBERCHEF_FQDN: "${CYBERCHEF_FQDN:-cyberchef.local}"
+      # LETSENCRYPT_ENABLED: "null"
+      # TRAEFIK_ENTRYPOINTS_WEBSECURE_HTTP_TLS_CERTRESOLVER: letsencrypt
+      TRAEFIK_ROUTERS_DASHBOARD_TLS_CERTRESOLVER: letsencrypt
+    volumes:
+      - ${TRAEFIK_VOLUME_PATH:-./data/traefik}/acme:/etc/traefik/acme
+      - ${TRAEFIK_VOLUME_PATH:-./data/traefik}/logs:/logs/
+      - ./compose/traefik/traefik.yml:/etc/traefik/traefik.yml
+      # - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - "--api=${TRAEFIK_API_ENABLED:-false}"
+      - "--log.level=${TRAEFIK_LOG_LEVEL:-ERROR}"
+      - "--certificatesresolvers.letsencrypt.acme.email=${TRAEFIK_CERTIFICATESRESOLVER_LETSENCRYPT_ACME_EMAIL:-letsencrypt@localhost}"
+      # - "--http.routers.dashboard.tls.certresolver=letsencrypt"
+      # - "--http.routers.web-secure-colander.tls.certresolver=letsencrypt"
+      # - "--http.routers.web-secure-threater.tls.certresolver=letsencrypt"
+      # - "--http.routers.web-secure-cyberchef.tls.certresolver=letsencrypt"
+      # - "--providers.docker=true"
+      # - "--http.routers.web-secure-colander.tls.certresolver=letsencrypt"
+      # - "--http.routers.web-secure-colander.tls.certresolver=letsencrypt"
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+    labels:
+      colander.service.name: traefik
+      colander.service.type: proxy
+
   # ----------------------------
   # Elasticsearch
   # ----------------------------
@@ -15,8 +78,10 @@ services:
         labels: colander.service.name,colander.service.type
     networks:
       - backend
+    # user: 1000:1000
     volumes:
-      - ${ELASTICSEARCH_VOLUME_PATH:-./data/elasticsearch}:/usr/share/elasticsearch/data
+      # - ${ELASTICSEARCH_VOLUME_PATH:-./data/elasticsearch}:/usr/share/elasticsearch/data
+      - elasticsearch_data:/usr/share/elasticsearch/data:Z
       # - production_es_data:/usr/share/elasticsearch/data
     healthcheck:
       test: [ "CMD-SHELL", "curl -s -X GET http://localhost:9200/_cluster/health?pretty | grep status | grep -q '\\(green\\|yellow\\)'" ]
@@ -27,7 +92,8 @@ services:
       - logger.level=WARN
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - path.repo=/usr/share/elasticsearch/data/snapshots
+      # - path.repo=/usr/share/elasticsearch/data/snapshots
+      - path.repo=/usr/share/elasticsearch/data
       - ES_JAVA_OPTS=-Xms${ELASTICSEARCH_ES_JAVA_OPTS_XMS:-2048m} -Xmx${ELASTICSEARCH_ES_JAVA_OPTS_XMX:-2048m}
     labels:
       colander.service.name: elasticsearch
@@ -40,7 +106,7 @@ services:
     image: "redis:${REDIS_IMAGE_VERSION:-latest}"
     restart: unless-stopped
     logging:
-      driver: journald
+      driver: "${LOG_DRIVER:-json-file}"
       options:
         labels: colander.service.name,colander.service.type
     healthcheck:
@@ -52,9 +118,8 @@ services:
       - backend
     # https://hub.docker.com/_/redis#start-with-persistent-storage
     volumes:
-      - ${REDIS_VOLUME_PATH:-./data/redis}:/data 
+      - ${REDIS_VOLUME_PATH:-./data/redis}:/data
     command: "redis-server --save 60 1"
     labels:
       colander.service.name: redis
       colander.service.type: database
-

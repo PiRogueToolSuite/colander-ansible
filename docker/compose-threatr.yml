@@ -1,3 +1,101 @@
 include:
   - compose-base.yml
 
+services:
+  traefik:
+    depends_on:
+      # TODO: cabler {% if flavor.use_threatr %}
+      threatr-front:
+        condition: service_healthy
+
+  # ----------------------------
+  # Threatr: {{ flavor.use_threatr }}
+  # ----------------------------
+  # TODO: cabler {% if flavor.use_threatr %}
+  # Web front 
+  threatr-front:
+    image: "ghcr.io/piroguetoolsuite/threatr:{{stack.services.threatr.version}}"
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    healthcheck:
+      test: [ "CMD", "grep", "-q", ":1388", "/proc/net/tcp" ]
+      interval: 30s
+      timeout: 2s
+      retries: 5
+    networks:
+      - backend
+    depends_on:
+      threatr-postgres:
+        condition: service_healthy
+      threatr-worker:
+        condition: service_started
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: /start
+    env_file:
+      - "{{ dot_env_files_dir }}/{{ stack.base.dot_env_file}}"
+      - "{{ dot_env_files_dir }}/{{ stack.services.threatr.dot_env_file}}"
+      - "{{ dot_env_files_dir }}/{{ stack.services.threatr_postgres.dot_env_file}}"
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: threatr-front
+      colander.service.type: web
+
+  # Workers
+  threatr-worker:
+    image: "ghcr.io/piroguetoolsuite/threatr:{{stack.services.threatr.version}}"
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    depends_on:
+      threatr-postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: /start-worker
+    env_file:
+      - "{{ dot_env_files_dir }}/{{ stack.base.dot_env_file}}"
+      - "{{ dot_env_files_dir }}/{{ stack.services.threatr.dot_env_file}}"
+      - "{{ dot_env_files_dir }}/{{ stack.services.threatr_postgres.dot_env_file}}"
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: threatr-worker
+      colander.service.type: worker
+
+  # Database
+  threatr-postgres:
+    build:
+      context: .
+      dockerfile: ./compose/postgres/Dockerfile
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+    volumes:
+      - production_threatr_postgres_data:/var/lib/postgresql/data
+      - production_threatr_postgres_backups:/backups
+    env_file:
+      - "{{ dot_env_files_dir }}/{{ stack.services.threatr_postgres.dot_env_file}}"
+    labels:
+      colander.service.name: threatr-postgres
+      colander.service.type: database
+# {% endif %}

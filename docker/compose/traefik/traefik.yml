@@ -1,14 +1,20 @@
+# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+# ------------------------ TODO ce bloc est à virer ; c'est le dashboard
+enable: true
+api:
+  insecure: true
+# ------------------------ ce bloc est à virer ; c'est le dashboard
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    
 log:
-  level: ERROR
   filePath: "/logs/error.log"
 
 accessLog:
   filePath: "/logs/access.log"
   bufferingSize: 100
 
-{% if stack.services.traefik.vars.enable_dashboard %}
-api: {}
-{% endif %}
+# # TODO: il  faut gérer ce fichier de config soit via passage d'args à traefik, soit via composition, soit via une surcharge
+# #       soit via des templates ansible
 
 entryPoints:
   web:
@@ -28,7 +34,6 @@ certificatesResolvers:
   letsencrypt:
     # https://docs.traefik.io/master/https/acme/#lets-encrypt
     acme:
-      email: "{{ stack.services.traefik.vars.acme_email }}"
       storage: /etc/traefik/acme/acme.json
       # https://docs.traefik.io/master/https/acme/#httpchallenge
       httpChallenge:
@@ -36,58 +41,53 @@ certificatesResolvers:
 
 http:
   routers:
-{% if stack.services.traefik.vars.enable_dashboard %}
-    web-secure-traefik-dashboard:
-      rule: "Host(`{{ stack.services.traefik.vars.traefik_fqdn }}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
-      service: api@internal
-      entryPoints:
-        - web-secure
-      middlewares:
-        - auth
-      tls:
-        certResolver: letsencrypt
-{% endif %}
+    # TODO: cabler le dashboard avec stack.services.traefik.vars.enable_dashboard
+    dashboard:
+      rule: Host(`{{ env "TRAEFIK_DASHBOARD_FQDN"}}`) && (PathPrefix(`/api`) || Host(`{{ env "TRAEFIK_DASHBOARD_FQDN"}}`) && PathPrefix(`/dashboard`))
+      service: "api@internal"
+      # TODO faut remettre ça
+      # entryPoints:
+      #   - web-secure
+      # middlewares:
+      #   - auth
+      # tls:
+      #   certResolver: letsencrypt
+
     web-secure-colander:
-      rule: "Host(`{{ stack.services.traefik.vars.colander_fqdn }}`)"
+      rule: Host(`{{ env "COLANDER_FQDN"}}`)
       entryPoints:
         - web-secure
       middlewares:
         - compress-http
         - csrf
       service: colander
+    #   # TODO faut remettre ça
       tls:
         certResolver: letsencrypt
-{% if flavor.use_threatr %}
     web-secure-threatr:
-      rule: "Host(`{{ stack.services.traefik.vars.threatr_fqdn }}`)"
+      rule: Host(`{{ env "THREATR_FQDN"}}`)
       entryPoints:
         - web-secure
       middlewares:
         - compress-http
         - csrf
       service: threatr
+      # TODO faut remettre ça
       tls:
         certResolver: letsencrypt
-{% endif %}
-{% if flavor.use_cyberchef %}
     web-secure-cyberchef:
-      rule: "Host(`{{ stack.services.traefik.vars.cyberchef_fqdn }}`)"
+      rule: Host(`{{ env "CYBERCHEF_FQDN"}}`)
       entryPoints:
         - web-secure
       middlewares:
         - compress-http
         - csrf
       service: cyberchef
+      # TODO faut remettre ça
       tls:
         certResolver: letsencrypt
-{% endif %}
+
   middlewares:
-{% if stack.services.traefik.vars.enable_dashboard %}
-    auth:
-      basicAuth:
-        users:
-          - "{{ colander_vault.traefik_admin_user }}:{{ colander_vault.traefik_admin_password | ansible.builtin.password_hash('bcrypt', rounds=4, salt=colander_vault.traefik_auth_salt) }}"  
-{% endif %}
     compress-http:
       # https://doc.traefik.io/traefik/middlewares/http/compress/
       compress: true
@@ -96,27 +96,29 @@ http:
       # https://docs.djangoproject.com/en/dev/ref/csrf/#ajax
       headers:
         hostsProxyHeaders: ["X-CSRFToken"]
+    # TODO: cabler le dashboard avec stack.services.traefik.vars.enable_dashboard
+    # auth:
+    #   basicAuth:
+    #     users:
+    #   {{/*    - "{{ colander_vault.traefik_admin_user }}:{{ colander_vault.traefik_admin_password | ansible.builtin.password_hash('bcrypt', rounds=4, salt=colander_vault.traefik_auth_salt) }}"  */}}
 
   services:
     colander:
       loadBalancer:
         servers:
           - url: http://colander-front:5000
-{% if flavor.use_threatr %}
     threatr:
       loadBalancer:
         servers:
           - url: http://threatr-front:5000
-{% endif %}
-{% if flavor.use_cyberchef %}
     cyberchef:
       loadBalancer:
         servers:
           - url: http://cyberchef:8000
-{% endif %}
 
 providers:
   # https://docs.traefik.io/master/providers/file/
   file:
-    filename: /etc/traefik/traefik.yml
+    # filename: /etc/traefik/traefik.yml
+    directory: /etc/traefik/
     watch: true
