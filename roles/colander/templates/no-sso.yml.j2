@@ -480,7 +480,8 @@ services:
   # Watchtower
   # ----------------------------
   watchtower:
-    image: containrrr/watchtower:{{stack.services.watchtower.version}}
+    # image: containrrr/watchtower:{{stack.services.watchtower.version}}
+    image: nickfedor/watchtower:{{stack.services.watchtower.version}}
     restart: unless-stopped
     logging:
       driver: journald
