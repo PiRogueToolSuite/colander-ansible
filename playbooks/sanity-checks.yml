@@ -3,6 +3,6 @@
   hosts: colander
   gather_facts: no
   tasks:
-    - include_role:
+    - import_role:
         name: colander
         tasks_from: checks

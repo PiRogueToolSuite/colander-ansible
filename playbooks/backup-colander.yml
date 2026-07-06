@@ -3,12 +3,12 @@
   hosts: colander
   gather_facts: no
   tasks:
-    - include_role:
+    - import_role:
         name: colander
         tasks_from: docker-info
-    - include_role:
+    - import_role:
         name: colander
         tasks_from: backup
-    - include_role:
+    - import_role:
         name: colander
         tasks_from: backups
