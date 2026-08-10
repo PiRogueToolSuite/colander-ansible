@@ -1,11 +1,11 @@
-- include_tasks: configure.yml
+- import_tasks: configure.yml
   when: use_docker_compose
 
-- include_tasks: deploy.yml
+- import_tasks: deploy.yml
   when: use_docker_compose
 
-- include_tasks: summarize.yml
+- import_tasks: summarize.yml
   when: use_docker_compose
 
-- include_tasks: teardown.yml
+- import_tasks: teardown.yml
   when: use_docker_compose
