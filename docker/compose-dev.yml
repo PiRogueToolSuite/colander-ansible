@@ -1,0 +1,27 @@
+include:
+  # - compose-base.yml
+  - compose-colander.yml
+  - compose-cyberchef.yml
+  - compose-threatr.yml
+  # - "compose.yml"
+services:
+  # traefik dashboard: http://traefik.local:8080/dashboard/
+  traefik:
+    ports:
+      - 0.0.0.0:8080:8080
+    volumes:
+      - ./data/traefik/certs/:/etc/traefik/certs:ro
+  colander-front:
+    volumes:
+      - ./data/traefik/certs/:/etc/traefik/certs:ro
+      # - ./data/traefik/certs/default.crt:/usr/local/lib/python3.12/site-packages/certifi/cacert.pem
+    environment:
+      REQUESTS_CA_BUNDLE: /etc/traefik/certs/default.crt
+      CURL_CA_BUNDLE: /etc/traefik/certs/default.crt
+  threatr-front:
+    volumes:
+      - ./data/traefik/certs/:/etc/traefik/certs:ro
+      # - ./data/traefik/certs/default.crt:/usr/local/lib/python3.12/site-packages/certifi/cacert.pem
+    environment:
+      REQUESTS_CA_BUNDLE: /etc/traefik/certs/default.crt
+      CURL_CA_BUNDLE: /etc/traefik/certs/default.crt

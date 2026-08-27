@@ -99,6 +99,7 @@ stack:
         data: '{{ docker_volumes_path }}/colander-db'
         backups: '{{ docker_volumes_path }}/colander-db-backups'
       dot_env_file: .colander-postgres
+      # TODO : cabler ça sur les variables COLANDER_POSTGRES_*
       environment:
         - POSTGRES_HOST=colander-postgres
         - POSTGRES_PORT=5432
@@ -159,4 +160,7 @@ stack:
       # per host. The default value is 2GB.
       xmx: '{{ stack_overrides.services.elasticsearch.xmx | default("2048m")}}'
       xms: '{{ stack_overrides.services.elasticsearch.xms | default("2048m")}}'
-
+    redis:
+      verison: 6
+      volumes:
+        data: '{{ docker_volumes_path }}/redis'

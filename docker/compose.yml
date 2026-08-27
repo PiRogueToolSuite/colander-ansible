@@ -1,0 +1,162 @@
+include:
+  - "compose-base.yml"
+  - "compose-colander.yml"
+  - "compose-threatr.yml"
+
+---
+
+# {{ ansible_managed }}
+
+volumes:
+  # production_traefik:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     device: "{{ stack.services.traefik.volumes.config }}"
+  #     o: bind
+  # production_traefik_logs:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     device: "{{ stack.services.traefik.volumes.logs }}"
+  #     o: bind
+  production_colander_postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: "{{ stack.services.colander_postgres.volumes.data }}"
+      o: bind
+  production_colander_postgres_backups:
+    driver: local
+    driver_opts:
+      type: none
+      device: "{{ stack.services.colander_postgres.volumes.backups }}"
+      o: bind
+# {% if flavor.use_threatr %}
+  # production_threatr_postgres_data:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     device: "{{ stack.services.threatr_postgres.volumes.data }}"
+  #     o: bind
+  # production_threatr_postgres_backups:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     device: "{{ stack.services.threatr_postgres.volumes.backups }}"
+  #     o: bind
+# {% endif %}
+  production_minio_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: "{{ stack.services.minio.volumes.data }}"
+      o: bind
+
+services:
+  # ----------------------------
+  # Mandolin: {{ flavor.use_mandolin }}
+  # ----------------------------
+# {% if flavor.use_mandolin %}
+# TODO : rendre ça optionnel, voir aussi BASE_USE_MANDOLIN
+  tika:
+    image: apache/tika:{{stack.services.tika.version}}
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    healthcheck:
+      test: [ "CMD", "wget", "-O", "/dev/null", "http://localhost:9998/tika" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: tika
+      colander.service.type: backend
+
+  clamav:
+    mem_reservation: 262144000
+    mem_limit: 1048576000
+    image: ajilaag/clamav-rest
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+      - frontend
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:9000/"]
+      interval: 60s
+      timeout: 2s
+      retries: 2
+      # ClamAV and the virus DB load can take a while on cold start, so allow extra startup time
+      # before Compose starts counting healthcheck failures against the container.
+      start_period: 210s
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: clamav
+      colander.service.type: backend
+
+  mandolin:
+    image: ghcr.io/piroguetoolsuite/mandolin:{{stack.services.mandolin.version}}
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    depends_on:
+      clamav:
+        condition: service_started
+      tika:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "-O", "/dev/null", "http://localhost:8000/" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    environment:
+      - TIKA_URL=http://tika:9998/
+      - CLAMAV_URL=http://clamav:9000/
+      - MAX_FILE_SIZE=250000000  # 250MB
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: mandolin
+      colander.service.type: backend
+# {% endif %}
+
+
+# {% endif %}
+
+
+  # ----------------------------
+  # Watchtower
+  # ----------------------------
+  watchtower:
+    image: "containrrr/watchtower:{{stack.services.watchtower.version}}"
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "{{docker_socket_path}}:/var/run/docker.sock:ro"
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+      # {{ stack.services.watchtower.environment | to_nice_yaml | indent(6) }}
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: watchtower
+      colander.service.type: docker

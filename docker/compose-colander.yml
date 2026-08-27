@@ -1,0 +1,220 @@
+# WIP/FIXME: keep in sync with other compose files.
+x-base_env: &base_env
+  USE_DOCKER: True
+  COLANDER_BASE_URL: ${BASE_COLANDER_BASE_URL}
+  THREATR_BASE_URL: ${BASE_THREATR_BASE_URL}
+  CYBERCHEF_BASE_URL:  ${CYBERCHEF_BASE_URL} # FIXME, faudrait pouvoir utiliser simplement que le FQDDN
+  ACME_EMAIL:  ${BASE_ACME_EMAIL}
+  ADMIN_NAME:  ${BASE_ADMIN_NAME}
+  ADMIN_EMAIL:  ${BASE_ADMIN_EMAIL}
+  DJANGO_DEFAULT_FROM_EMAIL:  ${BASE_DJANGO_DEFAULT_FROM_EMAIL}
+  EMAIL_HOST:  ${BASE_EMAIL_HOST}
+  EMAIL_HOST_USER:  ${BASE_EMAIL_HOST_USER}
+  EMAIL_HOST_PASSWORD:  ${BASE_EMAIL_HOST_PASSWORD}
+  EMAIL_PORT:  ${BASE_EMAIL_PORT}
+  EMAIL_USE_TLS:  ${BASE_EMAIL_USE_TLS}
+  EMAIL_USE_SSL:  ${BASE_EMAIL_USE_SSL}
+  LICENSE_ENABLED: True
+  USE_MANDOLIN:  ${BASE_USE_MANDOLIN}
+  USE_CYBERCHEF:  ${BASE_USE_CYBERCHEF}
+  USE_THREATR:  ${BASE_USE_THREATR}
+  USE_PLAYWRIGHT:  ${BASE_USE_PLAYWRIGHT}
+
+x-colander_env: &colander_env
+  DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
+  REDIS_URL: ${COLANDER_REDIS_URL}
+  DJANGO_SECURE_SSL_REDIRECT: ${COLANDER_DJANGO_SECURE_SSL_REDIRECT}
+  DJANGO_ACCOUNT_ALLOW_REGISTRATION: ${COLANDER_DJANGO_ACCOUNT_ALLOW_REGISTRATION}
+  DJANGO_SETTINGS_MODULE: ${COLANDER_DJANGO_SETTINGS_MODULE}
+  WEB_CONCURRENCY: ${COLANDER_WEB_CONCURRENCY}
+  DJANGO_ALLOWED_HOSTS: ${COLANDER_DJANGO_ALLOWED_HOSTS}
+  DJANGO_SECRET_KEY: ${COLANDER_DJANGO_SECRET_KEY}
+  DJANGO_ADMIN_URL: ${COLANDER_DJANGO_ADMIN_URL}
+
+x-minio_env: &minio_env
+  MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+  MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+
+x-colander_postgres_env: &colander_postgres_env
+  POSTGRES_HOST: ${COLANDER_POSTGRES_POSTGRES_HOST:-colander-postgres}
+  POSTGRES_PORT: ${COLANDER_POSTGRES_POSTGRES_PORT:-5432}
+  POSTGRES_DB: ${COLANDER_POSTGRES_POSTGRES_DB:-colander}
+  POSTGRES_USER: ${COLANDER_POSTGRES_POSTGRES_USER:-postgres}
+  POSTGRES_PASSWORD: ${COLANDER_POSTGRES_POSTGRES_PASSWORD:-pgpassword}
+  PGDATABASE: ${COLANDER_POSTGRES_PGDATABASE:-colander}
+  PGUSER: ${COLANDER_POSTGRES_PGUSER:-postgres}
+
+
+include:
+  - compose-base.yml
+
+services:
+  traefik:
+    depends_on:
+      colander-front:
+        condition: service_healthy
+
+  # ----------------------------
+  # Minio
+  # ----------------------------
+  minio:
+    image: "quay.io/minio/minio:${MINIO_IMAGE_VERSION:-latest}"
+    # user: "1000:1000"
+    volumes:
+      - ${MINIO_VOLUME_PATH:-./data/minio}:/data
+    command: server /data
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - backend
+    environment:
+      <<: *minio_env
+      # MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      # MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+
+    labels:
+      colander.service.name: minio
+      colander.service.type: storage
+
+  # ----------------------------
+  # Colander
+  # ----------------------------
+  # Database
+  colander-postgres:
+    build:
+      context: .
+      dockerfile: ./compose/postgres/Dockerfile
+      args:
+        - POSTGRES_IMAGE_VERSION=${COLANDER_POSTGRES_IMAGE_VERSION:-latest}
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+    volumes:
+      # - "${COLANDER_POSTGRES_DATA_VOLUME_PATH:-./data/colander-postgres/data}:/var/lib/postgresql/"
+      - colander_postgres_data:/var/lib/postgresql/
+      - "${COLANDER_POSTGRES_BACKUP_VOLUME_PATH:-./data/colander-postgres/backup}:/backups"
+    environment:
+      <<: *colander_postgres_env
+    labels:
+      colander.service.name: colander-postgres
+      colander.service.type: database
+
+  # Web front
+  colander-front:
+    image: "ghcr.io/piroguetoolsuite/colander:${COLANDER_IMAGE_VERSION:-main}"
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    healthcheck:
+      test: [ "CMD", "grep", "-q", ":1388", "/proc/net/tcp" ]
+      interval: 30s
+      timeout: 2s
+      retries: 5
+    networks:
+      - backend
+    depends_on:
+      colander-postgres:
+        condition: service_healthy
+      colander-worker:
+        condition: service_started
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+# TODO remettre
+# {% if flavor.use_mandolin %}
+      # mandolin:
+      #   condition: service_healthy
+# {% endif %}
+# {% if flavor.use_playwright %}
+      # playwright:
+      #   condition: service_started
+# {% endif %}
+# {% if flavor.use_cyberchef %}
+      # cyberchef:
+      #   condition: service_started
+# {% endif %}
+    command: /start
+    environment:
+      <<: [*base_env, *minio_env, *colander_env, *colander_postgres_env]
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: colander-front
+      colander.service.type: web
+
+  # Workers
+  colander-worker:
+    image: ghcr.io/piroguetoolsuite/colander:${COLANDER_IMAGE_VERSION:-main}
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    depends_on:
+      colander-postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+# TODO : remettre
+# {% if flavor.use_mandolin %}
+      # mandolin:
+        # condition: service_healthy
+# {% endif %}
+# {% if flavor.use_playwright %}
+      # playwright:
+        # condition: service_started
+# {% endif %}
+    command: /start-worker
+    environment:
+      <<: [*base_env, *minio_env, *colander_env, *colander_postgres_env]
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: colander-worker
+      colander.service.type: worker
+
+  # ----------------------------
+  # Playwright: {{ flavor.use_playwright }}
+  # ----------------------------
+  # {% if flavor.use_playwright %}
+  # TODO: rendre ça conditionnel ; voir aussi BASE_USE_PLAYWRIGHT
+  # on peut tester ça avec Colander: Collect -> URL -> Capture
+  playwright:
+    image: "ghcr.io/piroguetoolsuite/playwright-rest-api:${PLAYWRIGHT_IMAGE_VERSION:-main}"
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: playwright
+      colander.service.type: backend

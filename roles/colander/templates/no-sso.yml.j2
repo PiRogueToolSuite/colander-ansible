@@ -25,20 +25,6 @@ volumes:
       type: none
       device: {{ stack.services.colander_postgres.volumes.backups }}
       o: bind 
-{% if flavor.use_threatr %}
-  production_threatr_postgres_data: 
-    driver: local
-    driver_opts:
-      type: none
-      device: {{ stack.services.threatr_postgres.volumes.data }}
-      o: bind 
-  production_threatr_postgres_backups: 
-    driver: local
-    driver_opts:
-      type: none
-      device: {{ stack.services.threatr_postgres.volumes.backups }}
-      o: bind 
-{% endif %}
   production_minio_data: 
     driver: local
     driver_opts:

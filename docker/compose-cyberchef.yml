@@ -1,0 +1,20 @@
+services:
+  # ----------------------------
+  # Cyberchef: {{ flavor.use_cyberchef }}
+  # ----------------------------
+  # {% if flavor.use_cyberchef %}
+  # TODO : rendre ça optionnel, voir aussi BASE_USE_CYBERCHEF
+  cyberchef:
+    image: "mpepping/cyberchef:${CYBERCHEF_IMAGE_VERSION:-latest}"
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    labels:
+      com.centurylinklabs.watchtower.enable: false
+      colander.service.name: cyberchef
+      colander.service.type: web
+    # profiles: [cyberchef]
