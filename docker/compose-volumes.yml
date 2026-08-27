@@ -1,0 +1,16 @@
+volumes:
+  elasticsearch_data:
+  redis_data:
+  colander_postgres_data:
+  threatr_postgres_data:
+    # driver: local
+    # driver_opts:
+    #   type: none
+    #   device: "./data/threatr-postgres/data" # {{ stack.services.threatr_postgres.volumes.data }}"
+    #   o: bind
+  threatr_postgres_backups:
+    # driver: local
+    # driver_opts:
+    #   type: none
+    #   device: "./data/threatr-postgres/backups" # {{ stack.services.threatr_postgres.volumes.backups }}"
+    #   o: bind

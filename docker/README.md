@@ -1,3 +1,12 @@
+
+Useful URls:
+
+- http://traefik.local:8080/
+- https://colander.local/
+- https://threatr.local/
+- https://cyberchef.local/
+
+
 TODO:
 
 - [ ] we use redis 6, redis 8 is available

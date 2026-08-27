@@ -1,15 +1,14 @@
-networks:
-  frontend:
-  backend:
-    driver: bridge
-
-volumes:
-  elasticsearch_data:
-    # driver: local
-    # driver_opts:
-    #   type: none
-    #   device: "./data/elasticsearch"
-    #   o: bind
+include:
+  - compose-networks.yml
+  - compose-volumes.yml
+# volumes:
+#   elasticsearch_data:
+#   redis_data:
+#     # driver: local
+#     # driver_opts:
+#     #   type: none
+#     #   device: "./data/elasticsearch"
+#     #   o: bind
 
 services:
   # ----------------------------
@@ -118,7 +117,8 @@ services:
       - backend
     # https://hub.docker.com/_/redis#start-with-persistent-storage
     volumes:
-      - ${REDIS_VOLUME_PATH:-./data/redis}:/data
+      # - ${REDIS_VOLUME_PATH:-./data/redis}:/data
+      - redis_data:/data
     command: "redis-server --save 60 1"
     labels:
       colander.service.name: redis

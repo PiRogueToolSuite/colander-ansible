@@ -1,8 +1,9 @@
+# WIP/FIXME: keep in sync with other compose files.
 x-base_env: &base_env
   USE_DOCKER: True
   COLANDER_BASE_URL: ${BASE_COLANDER_BASE_URL}
   THREATR_BASE_URL: ${BASE_THREATR_BASE_URL}
-  CYBERCHEF_BASE_URL:  ${BASE_CYBERCHEF_BASE_URL}
+  CYBERCHEF_BASE_URL:  ${CYBERCHEF_BASE_URL} # FIXME, faudrait pouvoir utiliser simplement que le FQDDN
   ACME_EMAIL:  ${BASE_ACME_EMAIL}
   ADMIN_NAME:  ${BASE_ADMIN_NAME}
   ADMIN_EMAIL:  ${BASE_ADMIN_EMAIL}
@@ -20,6 +21,7 @@ x-base_env: &base_env
   USE_PLAYWRIGHT:  ${BASE_USE_PLAYWRIGHT}
 
 x-colander_env: &colander_env
+  DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
   REDIS_URL: ${COLANDER_REDIS_URL}
   DJANGO_SECURE_SSL_REDIRECT: ${COLANDER_DJANGO_SECURE_SSL_REDIRECT}
   DJANGO_ACCOUNT_ALLOW_REGISTRATION: ${COLANDER_DJANGO_ACCOUNT_ALLOW_REGISTRATION}
@@ -32,7 +34,6 @@ x-colander_env: &colander_env
 x-minio_env: &minio_env
   MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
   MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
-
 
 x-colander_postgres_env: &colander_postgres_env
   POSTGRES_HOST: ${COLANDER_POSTGRES_POSTGRES_HOST:-colander-postgres}
@@ -106,7 +107,8 @@ services:
     networks:
       - backend
     volumes:
-      - "${COLANDER_POSTGRES_DATA_VOLUME_PATH:-./data/colander-postgres/data}:/var/lib/postgresql/"
+      # - "${COLANDER_POSTGRES_DATA_VOLUME_PATH:-./data/colander-postgres/data}:/var/lib/postgresql/"
+      - colander_postgres_data:/var/lib/postgresql/
       - "${COLANDER_POSTGRES_BACKUP_VOLUME_PATH:-./data/colander-postgres/backup}:/backups"
     environment:
       <<: *colander_postgres_env
@@ -141,10 +143,6 @@ services:
       redis:
         condition: service_healthy
 # TODO remettre
-# {% if flavor.use_threatr %}
-      # threatr-front:
-      #   condition: service_started
-# {% endif %}
 # {% if flavor.use_mandolin %}
       # mandolin:
       #   condition: service_healthy
@@ -200,3 +198,23 @@ services:
       com.centurylinklabs.watchtower.enable: true
       colander.service.name: colander-worker
       colander.service.type: worker
+
+  # ----------------------------
+  # Playwright: {{ flavor.use_playwright }}
+  # ----------------------------
+  # {% if flavor.use_playwright %}
+  # TODO: rendre ça conditionnel ; voir aussi BASE_USE_PLAYWRIGHT
+  # on peut tester ça avec Colander: Collect -> URL -> Capture
+  playwright:
+    image: "ghcr.io/piroguetoolsuite/playwright-rest-api:${PLAYWRIGHT_IMAGE_VERSION:-main}"
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: playwright
+      colander.service.type: backend
