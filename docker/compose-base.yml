@@ -123,3 +123,27 @@ services:
     labels:
       colander.service.name: redis
       colander.service.type: database
+
+  watchtower:
+    # image: "containrrr/watchtower:${WATCHTOWER_IMAGE_VERSION:-latest}" #{{stack.services.watchtower.version}}"
+    # https://github.com/nicholas-fedor/watchtower
+    image: "nickfedor/watchtower:${WATCHTOWER_IMAGE_VERSION:-latest}" #{{stack.services.watchtower.version}}"
+    restart: unless-stopped
+    logging:
+      driver: "${LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "${DOCKER_SOCKET_PATH:-/run/user/1000/docker.sock}:/var/run/docker.sock:ro"
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+      # {{ stack.services.watchtower.environment | to_nice_yaml | indent(6) }}
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: watchtower
+      colander.service.type: docker
