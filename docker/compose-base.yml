@@ -19,8 +19,7 @@ services:
       context: .
       dockerfile: ./compose/traefik/Dockerfile
       args:
-        # - TRAEFIK_IMAGE_VERSION=v3.2.2
-          - TRAEFIK_IMAGE_VERSION=${TRAEFIK_IMAGE_VERSION:-latest}
+        - TRAEFIK_IMAGE_VERSION=${TRAEFIK_IMAGE_VERSION:-v3.2.2}
     restart: unless-stopped
     logging:
       driver: "${LOG_DRIVER:-json-file}"
@@ -46,6 +45,7 @@ services:
       - ${TRAEFIK_VOLUME_PATH:-./data/traefik}/acme:/etc/traefik/acme
       - ${TRAEFIK_VOLUME_PATH:-./data/traefik}/logs:/logs/
       - ./compose/traefik/traefik.yml:/etc/traefik/traefik.yml
+      - "${DOCKER_SOCKET_PATH:-/run/user/1000/docker.sock}:/var/run/docker.sock:ro"
       # - /var/run/docker.sock:/var/run/docker.sock:ro
     command:
       - "--api=${TRAEFIK_API_ENABLED:-false}"
@@ -69,7 +69,7 @@ services:
   # Elasticsearch
   # ----------------------------
   elasticsearch:
-    image: "elasticsearch:${ELASTICSEARCH_IMAGE_VERSION:-latest}"
+    image: "elasticsearch:${ELASTICSEARCH_IMAGE_VERSION:-8.4.1}"
     restart: unless-stopped
     logging:
       driver: "${LOG_DRIVER:-json-file}"
@@ -102,7 +102,7 @@ services:
   # Redis
   # ----------------------------
   redis:
-    image: "redis:${REDIS_IMAGE_VERSION:-latest}"
+    image: "redis:${REDIS_IMAGE_VERSION:-6}"
     restart: unless-stopped
     logging:
       driver: "${LOG_DRIVER:-json-file}"
@@ -125,9 +125,7 @@ services:
       colander.service.type: database
 
   watchtower:
-    # image: "containrrr/watchtower:${WATCHTOWER_IMAGE_VERSION:-latest}" #{{stack.services.watchtower.version}}"
-    # https://github.com/nicholas-fedor/watchtower
-    image: "nickfedor/watchtower:${WATCHTOWER_IMAGE_VERSION:-latest}" #{{stack.services.watchtower.version}}"
+    image: "nickfedor/watchtower:${WATCHTOWER_IMAGE_VERSION:-latest}"
     restart: unless-stopped
     logging:
       driver: "${LOG_DRIVER:-json-file}"

@@ -62,7 +62,7 @@ services:
   # TODO: cabler {% if flavor.use_threatr %}
   # Web front
   threatr-front:
-    image: "ghcr.io/piroguetoolsuite/threatr:${THREATR_IMAGE_VERSION:-latest}"
+    image: "ghcr.io/piroguetoolsuite/threatr:${THREATR_IMAGE_VERSION:-main}"
     restart: unless-stopped
     logging:
       driver: "${LOG_DRIVER:-json-file}"
@@ -95,7 +95,7 @@ services:
 
   # Workers
   threatr-worker:
-    image: "ghcr.io/piroguetoolsuite/threatr:${THREATR_IMAGE_VERSION:-latest}"
+    image: "ghcr.io/piroguetoolsuite/threatr:${THREATR_IMAGE_VERSION:-main}"
     restart: unless-stopped
     logging:
       driver: "${LOG_DRIVER:-json-file}"
