@@ -144,8 +144,8 @@ stack:
       # The version of Apache Tika to be deployed
       version: 3.0.0.0-full
     cyberchef:
-      # The version of Cyberchef to be deployed 
-      version: latest
+      # The version of Cyberchef to be deployed
+      version: v11.4.0
     playwright:
       # The version of Plawright to be deployed
       version: main
