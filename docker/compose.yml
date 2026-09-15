@@ -1,54 +1,28 @@
 include:
-  - "compose-base.yml"
-  - "compose-colander.yml"
-  - "compose-threatr.yml"
+  - compose-colander.yml
+  - compose-cyberchef.yml
+  - compose-threatr.yml
+  - compose-mandolin.yml
 
----
-
-# {{ ansible_managed }}
-
-volumes:
-  # production_traefik:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     device: "{{ stack.services.traefik.volumes.config }}"
-  #     o: bind
-  # production_traefik_logs:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     device: "{{ stack.services.traefik.volumes.logs }}"
-  #     o: bind
-  production_colander_postgres_data:
-    driver: local
-    driver_opts:
-      type: none
-      device: "{{ stack.services.colander_postgres.volumes.data }}"
-      o: bind
-  production_colander_postgres_backups:
-    driver: local
-    driver_opts:
-      type: none
-      device: "{{ stack.services.colander_postgres.volumes.backups }}"
-      o: bind
-# {% if flavor.use_threatr %}
-  # production_threatr_postgres_data:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     device: "{{ stack.services.threatr_postgres.volumes.data }}"
-  #     o: bind
-  # production_threatr_postgres_backups:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     device: "{{ stack.services.threatr_postgres.volumes.backups }}"
-  #     o: bind
-# {% endif %}
-  production_minio_data:
-    driver: local
-    driver_opts:
-      type: none
-      device: "{{ stack.services.minio.volumes.data }}"
-      o: bind
+  # FIXME: implement:
+  #   {% if flavor.use_cyberchef %} / BASE_USE_CYBERCHEF
+  #   {% if flavor.use_mandolin %} / BASE_USE_MANDOLIN
+  #       on colander-worker and colander-front
+  #   {% if flavor.use_threatr %} / BASE_USE_THREATR
+  #       on colander-front
+  #   {% if flavor.use_playwright %} / BASE_USE_PLAYWRIGHT
+  #       on colander-worker and colander-front
+  #
+  # this should implement :
+  #   add the needed compose files
+  #   add the required depends_on required
+  #
+  # colander-worker:
+  #   depends_on:
+  #     mandolin:
+  #       condition: service_healthy
+  #
+  # colander-front:
+  #   depends_on:
+  #     mandolin:
+  #       condition: service_healthy

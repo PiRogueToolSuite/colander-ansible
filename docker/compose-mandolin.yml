@@ -1,15 +1,15 @@
+include:
+  - compose-base.yml
+
 services:
   # ----------------------------
-  # Mandolin: {{ flavor.use_mandolin }}
+  # Mandolin
   # ----------------------------
-
-# {% if flavor.use_mandolin %}
-# TODO also see BASE_USE_MANDOLIN
   tika:
     image: "apache/tika:${TIKA_IMAGE_VERSION:-3.0.0.0-full}"
-    restart: unless-stopped
+    restart: always
     logging:
-      driver: "${LOG_DRIVER:-json-file}"
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
       options:
         labels: colander.service.name,colander.service.type
     networks:
@@ -24,14 +24,17 @@ services:
       colander.service.name: tika
       colander.service.type: backend
 
+  # ----------------------------
+  # ClamAV
+  # ----------------------------
   clamav:
     mem_reservation: 262144000
     mem_limit: 1048576000
     # TODO fixer la version de CLAMAV
     image: ajilaag/clamav-rest
-    restart: unless-stopped
+    restart: always
     logging:
-      driver: "${LOG_DRIVER:-json-file}"
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
       options:
         labels: colander.service.name,colander.service.type
     networks:
@@ -50,14 +53,14 @@ services:
       colander.service.name: clamav
       colander.service.type: backend
 
-  # TODO MANDOLIN dépend de tika + clamav (donc à mettre dans un compose-mandolin.yml)
+  # ----------------------------
+  # Mandolin
+  # ----------------------------
   mandolin:
-    # dla/vagrant-colander/shared-folder/colander-ansible/group_vars/all.yml
-    # image: ghcr.io/piroguetoolsuite/mandolin:{{stack.services.mandolin.version}}
-    image: "ghcr.io/piroguetoolsuite/mandolin:${MANDOLIN_VERSION:-main}"
-    restart: unless-stopped
+    image: "ghcr.io/piroguetoolsuite/mandolin:${MANDOLIN_IMAGE_VERSION:-main}"
+    restart: always
     logging:
-      driver: "${LOG_DRIVER:-json-file}"
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
       options:
         labels: colander.service.name,colander.service.type
     networks:
@@ -80,4 +83,3 @@ services:
       com.centurylinklabs.watchtower.enable: true
       colander.service.name: mandolin
       colander.service.type: backend
-# {% endif %}

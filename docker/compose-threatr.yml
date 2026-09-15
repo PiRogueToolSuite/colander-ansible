@@ -1,9 +1,12 @@
-# WIP/FIXME: keep in sync with other compose files.
+include:
+  - compose-base.yml
+  - compose-volumes.yml
+
 x-base_env: &base_env
   USE_DOCKER: True
-  COLANDER_BASE_URL: ${BASE_COLANDER_BASE_URL}
-  THREATR_BASE_URL: ${BASE_THREATR_BASE_URL}
-  CYBERCHEF_BASE_URL:  ${CYBERCHEF_BASE_URL} # FIXME, faudrait pouvoir utiliser simplement que le FQDDN
+  COLANDER_BASE_URL: ${COLANDER_BASE_URL:-https://${COLANDER_FQDN:-colander.local}}
+  THREATR_BASE_URL: ${THREATR_BASE_URL:-http://threatr-front:5000}
+  CYBERCHEF_BASE_URL:  ${CYBERCHEF_BASE_URL:-https://cyberchef.local}
   ACME_EMAIL:  ${BASE_ACME_EMAIL}
   ADMIN_NAME:  ${BASE_ADMIN_NAME}
   ADMIN_EMAIL:  ${BASE_ADMIN_EMAIL}
@@ -15,21 +18,17 @@ x-base_env: &base_env
   EMAIL_USE_TLS:  ${BASE_EMAIL_USE_TLS:-False}
   EMAIL_USE_SSL:  ${BASE_EMAIL_USE_SSL:-False}
   LICENSE_ENABLED: True
-  USE_MANDOLIN:  ${BASE_USE_MANDOLIN:-True}
-  USE_CYBERCHEF:  ${BASE_USE_CYBERCHEF:-True}
-  USE_THREATR:  ${BASE_USE_THREATR:-True}
-  USE_PLAYWRIGHT:  ${BASE_USE_PLAYWRIGHT:-True}
 
 x-threatr_env: &threatr_env
-  DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
-  REDIS_URL: "redis://redis:6379/0"
+  DJANGO_DEBUG: ${THREATR_DJANGO_DEBUG:-False}
+  REDIS_URL: ${THREATR_REDIS_URL:-redis://redis:6379/0}
   DJANGO_SECURE_SSL_REDIRECT: "false"
   WEB_CONCURRENCY: "4"
   DJANGO_SETTINGS_MODULE: "config.settings.production"
   DJANGO_ACCOUNT_ALLOW_REGISTRATION: "False"
-  DJANGO_ALLOWED_HOSTS: "${THREATR_DJANGO_ALLOWED_HOSTS}"
-  DJANGO_SECRET_KEY: "${THREATR_DJANGO_SECRET_KEY}"
-  DJANGO_ADMIN_URL: "${THREATR_DJANGO_ADMIN_URL}"
+  DJANGO_ALLOWED_HOSTS: "${THREATR_DJANGO_ALLOWED_HOSTS:-${THREATR_FQDN:-threatr.local},threatr-front}"
+  DJANGO_SECRET_KEY: "${THREATR_DJANGO_SECRET_KEY:?threatr django secret key is required}"
+  DJANGO_ADMIN_URL: "${THREATR_DJANGO_ADMIN_URL:-admin/}"
 
 x-threater_postgres_env: &threater_postgres_env
   POSTGRES_HOST: "threatr-postgres"
@@ -41,64 +40,43 @@ x-threater_postgres_env: &threater_postgres_env
   PGDATABASE: "threatr"
   PGUSER: "{{ colander_vault.threatr_postgres_user }}"
 
-include:
-  - compose-base.yml
-  - compose-volumes.yml
-
 services:
-  traefik:
-    depends_on:
-      # TODO: cabler {% if flavor.use_threatr %}
-      threatr-front:
-        condition: service_healthy
-  # colander-front:
-  #   depends_on:
-  #     threatr-front:
-  #       condition: service_started
-
   # ----------------------------
-  # Threatr: {{ flavor.use_threatr }}
+  # Threatr
   # ----------------------------
-  # TODO: cabler {% if flavor.use_threatr %}
-  # Web front
-  threatr-front:
-    image: "ghcr.io/piroguetoolsuite/threatr:${THREATR_IMAGE_VERSION:-main}"
-    restart: unless-stopped
+  # Database
+  threatr-postgres:
+    # FIXME publish use our registry instead
+    build:
+      context: .
+      dockerfile: ./compose/postgres/Dockerfile
+    restart: always
     logging:
-      driver: "${LOG_DRIVER:-json-file}"
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
       options:
         labels: colander.service.name,colander.service.type
     healthcheck:
-      test: [ "CMD", "grep", "-q", ":1388", "/proc/net/tcp" ]
-      interval: 30s
-      timeout: 2s
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
       retries: 5
     networks:
       - backend
-    depends_on:
-      threatr-postgres:
-        condition: service_healthy
-      threatr-worker:
-        condition: service_started
-      elasticsearch:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    command: /start
+    volumes:
+      - ${THREATR_POSTGRES_DATA_VOLUME_PATH:-production_threatr_postgres_data}:/var/lib/postgresql
+      - ${THREATR_POSTGRES_BACKUPS_VOLUME_PATH:-production_threatr_postgres_backups}:/backups
     environment:
-      # {{ stack.base.dot_env_file}}, {{ stack.services.threatr.dot_env_file}}, {{ stack.services.threatr_postgres.dot_env_file}}
-      <<: [*base_env, *threatr_env, *threater_postgres_env]
+      <<: *threater_postgres_env # {{ stack.services.threatr_postgres.dot_env_file}}
     labels:
-      com.centurylinklabs.watchtower.enable: true
-      colander.service.name: threatr-front
-      colander.service.type: web
+      colander.service.name: threatr-postgres
+      colander.service.type: database
 
-  # Workers
+# Workers
   threatr-worker:
     image: "ghcr.io/piroguetoolsuite/threatr:${THREATR_IMAGE_VERSION:-main}"
-    restart: unless-stopped
+    restart: always
     logging:
-      driver: "${LOG_DRIVER:-json-file}"
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
       options:
         labels: colander.service.name,colander.service.type
     networks:
@@ -112,38 +90,52 @@ services:
         condition: service_healthy
     command: /start-worker
     environment:
-      # {{ stack.base.dot_env_file}}, {{ stack.services.threatr.dot_env_file}}, {{ stack.services.threatr_postgres.dot_env_file}}
+      # FIXME: {{ stack.base.dot_env_file}}, {{ stack.services.threatr.dot_env_file}}, {{ stack.services.threatr_postgres.dot_env_file}}
       <<: [*base_env, *threatr_env, *threater_postgres_env]
     labels:
       com.centurylinklabs.watchtower.enable: true
       colander.service.name: threatr-worker
       colander.service.type: worker
 
-  # Database
-  threatr-postgres:
-    build:
-      context: .
-      dockerfile: ./compose/postgres/Dockerfile
-    restart: unless-stopped
-    logging:
-      driver: "${LOG_DRIVER:-json-file}"
-      options:
-        labels: colander.service.name,colander.service.type
+  # ----------------------------
+  # Threatr: {{ flavor.use_threatr }}
+  # ----------------------------
+  # FIXME: implement this
+  # {% if flavor.use_threatr %}
+  # Web front
+  threatr-front:
+    extends: threatr-worker
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready" ]
-      interval: 10s
-      timeout: 5s
+      test: [ "CMD", "grep", "-q", ":1388", "/proc/net/tcp" ]
+      interval: 30s
+      timeout: 2s
       retries: 5
+    depends_on:
+      threatr-worker:
+        condition: service_started
+    command: /start
     networks:
-      - backend
-    volumes:
-      # - production_threatr_postgres_data:/var/lib/postgresql/data
-      # - production_threatr_postgres_backups:/backups
-      # - threatr_postgres_data:/var/lib/postgresql/data
-      - threatr_postgres_data:/var/lib/postgresql
-      - threatr_postgres_backups:/backups
-    environment:
-      <<: *threater_postgres_env # {{ stack.services.threatr_postgres.dot_env_file}}
+      - frontend
+    expose: # FIXME threatr image should define this in its Dockerfile
+      - 5000
     labels:
-      colander.service.name: threatr-postgres
-      colander.service.type: database
+      colander.service.name: threatr-front
+      colander.service.type: web
+      traefik.enable: "true"
+      # https://doc.traefik.io/traefik/middlewares/http/compress/
+      traefik.http.middlewares.compress-http.compress: true
+      # https://docs.djangoproject.com/fr/4.2/ref/settings/#csrf-header-name
+      traefik.http.middlewares.csrf.headers.hostsProxyHeaders: "X-CSRFToken"
+      traefik.http.routers.threatr.rule: "Host(`${THREATR_FQDN:-threatr.local}`)"
+      traefik.http.routers.threatr.entrypoints: "websecure"
+      traefik.http.routers.threatr.middlewares: "compress-http,csrf"
+      traefik.http.routers.threatr.tls.certResolver: "letsencrypt"
+      # https://github.com/traefik/traefik/issues/1156#issuecomment-287387666
+      traefik.docker.network: "docker_frontend"
+
+volumes:
+  # Volume for threatr-postges data
+  production_threatr_postgres_data:
+
+  # Volume for threatr-postgres backups
+  production_threatr_postgres_backups:

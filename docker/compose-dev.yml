@@ -1,27 +1,40 @@
 include:
-  # - compose-base.yml
-  - compose-colander.yml
-  - compose-cyberchef.yml
-  - compose-threatr.yml
-  # - "compose.yml"
+  - "compose.yml"
+
 services:
-  # traefik dashboard: http://traefik.local:8080/dashboard/
+  # - Enables traefik API and dashboard (http://traefik.local:8080/dashboard/)
+  # - Set traefik's log level to TRACE
   traefik:
+
+    volumes:
+      - ./data/traefik/certs/:/etc/traefik/certs:ro
+      - ./data/traefik/dynamic/:/etc/traefik/dynamic:ro
+    command:
+      # following args are common to the ones defined in compose-base.yml
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=frontend"
+      - --entryPoints.web.address=:80
+      - --entryPoints.web.http.redirections.entryPoint.to=websecure
+      - --entryPoints.web.http.redirections.entryPoint.scheme=https
+      - --entryPoints.web.http.redirections.entryPoint.permanent=true
+      - --entryPoints.websecure.address=:443
+      - --entryPoints.websecure.asDefault=true
+      - "--certificatesresolvers.letsencrypt.acme.email=${TRAEFIK_CERTIFICATESRESOLVER_LETSENCRYPT_ACME_EMAIL:-letsencrypt@localhost}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+
+      # following args specific to compose-dev.yml
+      - "--log.level=${TRAEFIK_LOG_LEVEL:-ERROR}" # set to Trace
+      # FIXME implement: stack.services.traefik.vars.enable_dashboard
+      - "--api=${TRAEFIK_API_ENABLED:-true}" # enable the API
+      - "--api.insecure=true"
+      # Attach the static configuration tls.yaml file that contains the tls configuration settings
+      - "--providers.file.filename=/etc/traefik/dynamic/tls.yaml"
     ports:
+      # Exposes traefik dashboard and traefik API
       - 0.0.0.0:8080:8080
-    volumes:
-      - ./data/traefik/certs/:/etc/traefik/certs:ro
-  colander-front:
-    volumes:
-      - ./data/traefik/certs/:/etc/traefik/certs:ro
-      # - ./data/traefik/certs/default.crt:/usr/local/lib/python3.12/site-packages/certifi/cacert.pem
-    environment:
-      REQUESTS_CA_BUNDLE: /etc/traefik/certs/default.crt
-      CURL_CA_BUNDLE: /etc/traefik/certs/default.crt
-  threatr-front:
-    volumes:
-      - ./data/traefik/certs/:/etc/traefik/certs:ro
-      # - ./data/traefik/certs/default.crt:/usr/local/lib/python3.12/site-packages/certifi/cacert.pem
-    environment:
-      REQUESTS_CA_BUNDLE: /etc/traefik/certs/default.crt
-      CURL_CA_BUNDLE: /etc/traefik/certs/default.crt
+    labels:
+      # Expose traefik dashboard on http://traefik.local:8000/dashboard
+      # and API on http://traefik.local:800/api
+      - "traefik.http.routers.dashboard.rule=Host(`${TRAEFIK_DASHBOARD_FQDN:-traefik.local}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+      - "traefik.http.routers.dashboard.service=api@internal"

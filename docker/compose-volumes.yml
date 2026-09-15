@@ -1,16 +1,77 @@
-volumes:
-  elasticsearch_data:
-  redis_data:
-  colander_postgres_data:
-  threatr_postgres_data:
+# FIXME: wireup those volumes with Ansible
+# FIXME: it should be cleaner to have volumes definition in the compose file where we use it,
+
+
+# so move colander volumes to compose-colander.yml etc.
+# volumes:
+  # Volume for traefik's acme configuration files
+  # production_traefik:
     # driver: local
     # driver_opts:
     #   type: none
-    #   device: "./data/threatr-postgres/data" # {{ stack.services.threatr_postgres.volumes.data }}"
+    #   # device: "{{ stack.services.traefik.volumes.config }}"
     #   o: bind
-  threatr_postgres_backups:
+
+  # # Volume for traefik logs
+  # production_traefik_logs:
     # driver: local
     # driver_opts:
     #   type: none
-    #   device: "./data/threatr-postgres/backups" # {{ stack.services.threatr_postgres.volumes.backups }}"
+    #   device: "{{ stack.services.traefik.volumes.logs }}"
     #   o: bind
+
+  # # Volume for elasticsearch data
+  # production_es_data:
+    # driver: local
+    # driver_opts:
+    #   type: none
+    #   device: {{ stack.services.elasticsearch.volumes.data }}
+    #   o: bind
+
+  # # Volume for redis data
+  # production_redis_data:
+    # driver: local
+    # driver_opts:
+    #   type: none
+    #   device: "{{ stack.services.XXXXXXXXX.volumes.data }}"
+    #   o: bind
+
+  # Volume for minio data
+  # production_minio_data:
+    # driver: local
+    # driver_opts:
+    #   type: none
+    #   device: "{{ stack.services.minio.volumes.data }}"
+    #   o: bind
+
+  # Volume for colander-postgres data
+  # production_colander_postgres_data:
+    # driver: local
+    # driver_opts:
+    #   type: none
+    #   device: {{ stack.services.colander_postgres.volumes.data }}
+    #   o: bind
+
+  # Volume for colander-postgres backups
+  # production_colander_postgres_backups:
+    # driver: local
+    # driver_opts:
+    #   type: none
+    #   device: {{ stack.services.colander_postgres.volumes.backups }}
+    #   o: bind
+
+  # # Volume for threatr-postges data
+  # production_threatr_postgres_data:
+  #   # driver: local
+  #   # driver_opts:
+  #   #   type: none
+  #   #   device: {{ stack.services.threatr_postgres.volumes.data }}
+  #   #   o: bind
+
+  # # Volume for threatr-postgres backups
+  # production_threatr_postgres_backups:
+  #   # driver: local
+  #   # driver_opts:
+  #   #   type: none
+  #   #   device: {{ stack.services.threatr_postgres.volumes.backups }}
+  #   #   o: bind

@@ -1,4 +1,4 @@
-# Install Docker in rootless mode with Docker Compose 
+# Install Docker in rootless mode with Docker Compose
 # (the only mode supported by now)
 docker_rootless: true
 docker_disable_root_daemon: true
@@ -17,8 +17,8 @@ dot_env_files_dir: .envs
 compose_file_template: no-sso.yml.j2
 compose_file: docker-compose.yml
 
-# The "flavor" of the service stack. Administrators can decide to disable 
-# some service either because they will not be used nor because the 
+# The "flavor" of the service stack. Administrators can decide to disable
+# some service either because they will not be used nor because the
 # server cannot handle the load.
 # The "flavor" can be specifie per host.
 flavor:
@@ -154,9 +154,9 @@ stack:
       volumes:
         data: '{{ docker_volumes_path }}/elasticsearch'
         snapshots: '{{ docker_volumes_path }}/elasticsearch-snapshots'
-      # The version of Elasticsearch to be deployed 
+      # The version of Elasticsearch to be deployed
       version: 8.4.1
-      # The amount of memory to be allocated to ES. This can be specified 
+      # The amount of memory to be allocated to ES. This can be specified
       # per host. The default value is 2GB.
       xmx: '{{ stack_overrides.services.elasticsearch.xmx | default("2048m")}}'
       xms: '{{ stack_overrides.services.elasticsearch.xms | default("2048m")}}'
