@@ -70,12 +70,8 @@ services:
   # ----------------------------
   # Database
   colander-postgres:
-    # FIXME publish use our registry instead
-    build:
-      context: .
-      dockerfile: ./compose/postgres/Dockerfile
-      args:
-        - POSTGRES_IMAGE_VERSION=${COLANDER_POSTGRES_IMAGE_VERSION:-latest}
+    # https://github.com/PiRogueToolSuite/postgres/pkgs/container/postgres/versions
+    image: "ghcr.io/piroguetoolsuite/postgres:${COLANDER_POSTGRES_IMAGE_VERSION:-main}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"

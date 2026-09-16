@@ -46,10 +46,8 @@ services:
   # ----------------------------
   # Database
   threatr-postgres:
-    # FIXME publish use our registry instead
-    build:
-      context: .
-      dockerfile: ./compose/postgres/Dockerfile
+    # https://github.com/PiRogueToolSuite/postgres/pkgs/container/postgres/versions
+    image: "ghcr.io/piroguetoolsuite/postgres:${THREATR_POSTGRES_IMAGE_VERSION:-main}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
