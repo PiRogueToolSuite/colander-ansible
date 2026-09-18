@@ -7,13 +7,13 @@ x-base_env: &base_env
   COLANDER_BASE_URL: ${COLANDER_BASE_URL:-https://${COLANDER_FQDN:-colander.local}}
   THREATR_BASE_URL: ${THREATR_BASE_URL:-http://threatr-front:5000}
   CYBERCHEF_BASE_URL:  ${CYBERCHEF_BASE_URL:-https://cyberchef.local}
-  ACME_EMAIL:  ${BASE_ACME_EMAIL}
-  ADMIN_NAME:  ${BASE_ADMIN_NAME}
-  ADMIN_EMAIL:  ${BASE_ADMIN_EMAIL}
-  DJANGO_DEFAULT_FROM_EMAIL:  ${BASE_DJANGO_DEFAULT_FROM_EMAIL}
-  EMAIL_HOST:  ${BASE_EMAIL_HOST}
-  EMAIL_HOST_USER:  ${BASE_EMAIL_HOST_USER}
-  EMAIL_HOST_PASSWORD:  ${BASE_EMAIL_HOST_PASSWORD}
+  ACME_EMAIL:  ${BASE_ACME_EMAIL:-admin@local.host}
+  ADMIN_NAME:  ${BASE_ADMIN_NAME:-admin}
+  ADMIN_EMAIL:  ${BASE_ADMIN_EMAIL:-admin@local.host}
+  DJANGO_DEFAULT_FROM_EMAIL:  ${BASE_DJANGO_DEFAULT_FROM_EMAIL:-admin@local.host}
+  EMAIL_HOST:  ${BASE_EMAIL_HOST:-mailhog}
+  EMAIL_HOST_USER:  ${BASE_EMAIL_HOST_USER:-postmaster@local.host}
+  EMAIL_HOST_PASSWORD:  ${BASE_EMAIL_HOST_PASSWORD:-}
   EMAIL_PORT:  ${BASE_EMAIL_PORT:-25}
   EMAIL_USE_TLS:  ${BASE_EMAIL_USE_TLS:-False}
   EMAIL_USE_SSL:  ${BASE_EMAIL_USE_SSL:-False}
@@ -31,14 +31,13 @@ x-threatr_env: &threatr_env
   DJANGO_ADMIN_URL: "${THREATR_DJANGO_ADMIN_URL:-admin/}"
 
 x-threater_postgres_env: &threater_postgres_env
-  POSTGRES_HOST: "threatr-postgres"
-  POSTGRES_PORT: "5432"
-  POSTGRES_DB: "threatr"
-  POSTGRES_USER: "{{ colander_vault.threatr_postgres_user }}"
-  POSTGRES_PASSWORD: "{{ colander_vault.threatr_postgres_password }}"
-  # Used by pg_ready, see the healthcheck in the Docker Compose file
-  PGDATABASE: "threatr"
-  PGUSER: "{{ colander_vault.threatr_postgres_user }}"
+  POSTGRES_HOST: ${THREATR_POSTGRES_POSTGRES_HOST:-threatr-postgres}
+  POSTGRES_PORT: ${THREATR_POSTGRES_POSTGRES_PORT:-5432}
+  POSTGRES_DB: ${THREATR_POSTGRES_PGDATABASE:-threatr}
+  POSTGRES_USER: ${THREATR_POSTGRES_POSTGRES_USER:-postgres}
+  POSTGRES_PASSWORD: ${THREATR_POSTGRES_POSTGRES_PASSWORD:-pgpassword}
+  PGDATABASE: ${THREATR_POSTGRES_PGDATABASE:-threatr}
+  PGUSER: ${THREATR_POSTGRES_PGUSER:-postgres}
 
 services:
   # ----------------------------
