@@ -143,8 +143,6 @@ services:
     command: /start
     networks:
       - frontend
-    expose: # FIXME colander image should define this in its Dockerfile
-      - 5000
     labels:
       colander.service.name: colander-front
       colander.service.type: web

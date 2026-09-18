@@ -114,8 +114,6 @@ services:
     command: /start
     networks:
       - frontend
-    expose: # FIXME threatr image should define this in its Dockerfile
-      - 5000
     labels:
       colander.service.name: threatr-front
       colander.service.type: web
