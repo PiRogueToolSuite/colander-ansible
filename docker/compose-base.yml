@@ -85,7 +85,7 @@ services:
   # Redis
   # ----------------------------
   redis:
-    image: "redis:${REDIS_IMAGE_VERSION:-6}"
+    image: "redis:${REDIS_IMAGE_VERSION:-8}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
