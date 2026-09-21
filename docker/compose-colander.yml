@@ -141,8 +141,11 @@ services:
       colander-worker:
         condition: service_started
     command: /start
+    # networks: !override
     networks:
       - frontend
+    ports:
+      - 127.0.0.1:5000:5000
     labels:
       colander.service.name: colander-front
       colander.service.type: web

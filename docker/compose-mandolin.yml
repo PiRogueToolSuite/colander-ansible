@@ -65,6 +65,8 @@ services:
         labels: colander.service.name,colander.service.type
     networks:
       - backend
+    ports:
+      - 127.0.0.1:5002:8000
     depends_on:
       clamav:
         condition: service_started

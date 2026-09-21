@@ -113,6 +113,8 @@ services:
     command: /start
     networks:
       - frontend
+    ports:
+      - 127.0.0.1:5001:5000
     labels:
       colander.service.name: threatr-front
       colander.service.type: web
