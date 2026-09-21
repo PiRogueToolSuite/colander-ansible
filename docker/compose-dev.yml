@@ -2,15 +2,40 @@ include:
   - "compose.yml"
 
 services:
+  # This init container generates a self signed certificate for your local traefik deployment,
+  # this certificate allows the connection of pirogue tools with colander using an HTTPS connection
+  # while not requiring you to have a certificate obtained from a public certificate authority.
+  dev-init-container:
+    image: alpine:latest
+    init: true
+    volumes:
+      - ./data/traefik/certs/:/etc/traefik/certs
+    command: >
+      sh -c "
+        SELF_SIGNED_PATH=/etc/traefik/certs/self-signed
+        CERT_PATH=$$SELF_SIGNED_PATH/cert.pem
+        KEY_PATH=$$SELF_SIGNED_PATH/key.pem
+        if [ ! -f "$$CERT_PATH" ] || [ ! -f "$$KEY_PATH" ]; then
+          apk add openssl
+          mkdir -p "$$SELF_SIGNED_PATH"
+          openssl req -new -x509 -subj "/C=FR/L=Paris/O=PTS-dev/CN=colander.local" -addext "subjectAltName=DNS:colander.local,DNS:threatr.local,DNS:cyberchef.local" -newkey rsa:2048 -keyout "$$KEY_PATH" -out "$$CERT_PATH" -days 365 -nodes
+        fi
+      "
+
   # - Enables traefik API and dashboard (http://traefik.local:8080/dashboard/)
   # - Set traefik's log level to TRACE
+  # Overrides the traefik service to expose its dashboard (available at http://traefik.local:8080/dashboard/)
+  # it also increase the level of logs available for troubleshooting.
   traefik:
-
+    depends_on:
+      dev-init-container:
+        condition: service_completed_successfully
     volumes:
       - ./data/traefik/certs/:/etc/traefik/certs:ro
       - ./data/traefik/dynamic/:/etc/traefik/dynamic:ro
     command:
-      # following args are common to the ones defined in compose-base.yml
+      # following args are common to the ones defined in compose-base.yml ;
+      # please keep them aligned on both files.
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.network=frontend"
       - --entryPoints.web.address=:80
@@ -23,10 +48,9 @@ services:
       - "--certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme/acme.json"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
 
-      # following args specific to compose-dev.yml
-      - "--log.level=${TRAEFIK_LOG_LEVEL:-ERROR}" # set to Trace
-      # FIXME implement: stack.services.traefik.vars.enable_dashboard
-      - "--api=${TRAEFIK_API_ENABLED:-true}" # enable the API
+      # following args specific to this compose-dev.yml file
+      - "--log.level=${TRAEFIK_LOG_LEVEL:-TRACE}"
+      - "--api=${TRAEFIK_API_ENABLED:-true}"
       - "--api.insecure=true"
       # Attach the static configuration tls.yaml file that contains the tls configuration settings
       - "--providers.file.filename=/etc/traefik/dynamic/tls.yaml"
