@@ -56,7 +56,7 @@ services:
       - "--providers.file.filename=/etc/traefik/dynamic/tls.yaml"
     ports:
       # Exposes traefik dashboard and traefik API
-      - 0.0.0.0:8080:8080
+      - ${TRAEFIK_DASHBOARD_BINDING:-127.0.0.1:8080}:8080
     labels:
       # Expose traefik dashboard on http://traefik.local:8000/dashboard
       # and API on http://traefik.local:800/api
