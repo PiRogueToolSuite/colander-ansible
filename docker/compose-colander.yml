@@ -60,10 +60,6 @@ services:
     labels:
       colander.service.name: minio
       colander.service.type: storage
-      traefik.enable: "true"
-      traefik.http.routers.traefik.rule: "Host(`minio.local`)"
-      traefik.http.routers.traefik.entrypoints: "websecure"
-      traefik.http.routers.traefik.tls: "true"
 
   # ----------------------------
   # Colander
