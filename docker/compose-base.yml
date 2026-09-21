@@ -28,7 +28,7 @@ services:
       - ${TRAEFIK_VOLUME_PATH:-production_traefik}:/etc/traefik/acme
       - ${TRAEFIK_LOGS_VOLUME_PATH:-production_traefik_logs}:/logs/
       # - ./compose/traefik/traefik.yml:/etc/traefik/traefik.yml
-      - "${DOCKER_SOCKET_PATH:-/run/user/1000/docker.sock}:/var/run/docker.sock:ro"
+      - "${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro"
     command:
       # following args are common to the ones defined in compose-dev.yml
       - "--log.level=${TRAEFIK_LOG_LEVEL:-ERROR}"
@@ -117,7 +117,7 @@ services:
       - backend
     volumes:
       - "/etc/timezone:/etc/timezone:ro"
-      - "${DOCKER_SOCKET_PATH:-/run/user/1000/docker.sock}:/var/run/docker.sock:ro"
+      - "${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro"
     environment:
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_LABEL_ENABLE=true
