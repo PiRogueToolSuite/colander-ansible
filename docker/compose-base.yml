@@ -44,8 +44,8 @@ services:
       - "--certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme/acme.json"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
     ports:
-      - "${TRAEFIK_HTTP_BINDING:-0.0.0.0:80}:80"
-      - "${TRAEFIK_HTTPS_BINDING:-0.0.0.0:443}:443"
+      - "${TRAEFIK_HTTP_BINDING:-127.0.0.1:8000}:80"
+      - "${TRAEFIK_HTTPS_BINDING:-127.0.0.1:4443}:443"
     labels:
       colander.service.name: traefik
       colander.service.type: proxy
