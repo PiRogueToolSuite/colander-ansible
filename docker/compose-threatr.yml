@@ -26,7 +26,7 @@ x-threatr_env: &threatr_env
   WEB_CONCURRENCY: "4"
   DJANGO_SETTINGS_MODULE: "config.settings.production"
   DJANGO_ACCOUNT_ALLOW_REGISTRATION: "False"
-  DJANGO_ALLOWED_HOSTS: "${THREATR_DJANGO_ALLOWED_HOSTS:-${THREATR_FQDN:-threatr.local},threatr-front}"
+  DJANGO_ALLOWED_HOSTS: "${THREATR_DJANGO_ALLOWED_HOSTS:-${THREATR_FQDN:-threatr.local},threatr-front,localhost,127.0.0.1}"
   DJANGO_SECRET_KEY: "${THREATR_DJANGO_SECRET_KEY:?threatr django secret key is required}"
   DJANGO_ADMIN_URL: "${THREATR_DJANGO_ADMIN_URL:-admin/}"
 
