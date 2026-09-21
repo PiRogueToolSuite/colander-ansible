@@ -67,6 +67,15 @@ docker compose -f compose-mandolin.yml up -d
 docker compose -f compose-cyberchef.yml up -d
 ```
 
+### Compose your stack "à la carte"
+
+Of course, you can pick more than one tool by giving the corresponding compose file as a value of `-f` argument of
+the docker compose CLI:
+
+```bash
+docker compose -f compose-colander.yml -f compose-threatr.yml up -d
+```
+
 ---
 
 
