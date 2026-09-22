@@ -18,9 +18,13 @@ services:
         if [ ! -f "$$CERT_PATH" ] || [ ! -f "$$KEY_PATH" ]; then
           apk add openssl
           mkdir -p "$$SELF_SIGNED_PATH"
-          openssl req -new -x509 -subj "/C=FR/L=Paris/O=PTS-dev/CN=colander.local" -addext "subjectAltName=DNS:colander.local,DNS:threatr.local,DNS:cyberchef.local" -newkey rsa:2048 -keyout "$$KEY_PATH" -out "$$CERT_PATH" -days 365 -nodes
+          openssl req -new -x509 -subj "/C=FR/L=Paris/O=PTS-dev/CN=$COLANDER_FQDN" -addext "subjectAltName=DNS:$COLANDER_FQDN,DNS:$THREATR_FQDN,DNS:$CYBERCHEF_FQDN" -newkey rsa:2048 -keyout "$$KEY_PATH" -out "$$CERT_PATH" -days 365 -nodes
         fi
       "
+    environment:
+      COLANDER_FQDN: "${COLANDER_FQDN:-colander.local}"
+      THREATR_FQDN: "${THREATR_FQDN:-threatr.local}"
+      CYBERCHEF_FQDN: "${CYBERCHEF_FQDN:-cyberchef.local}"
 
   # - Enables traefik API and dashboard (http://traefik.local:8080/dashboard/)
   # - Set traefik's log level to TRACE
