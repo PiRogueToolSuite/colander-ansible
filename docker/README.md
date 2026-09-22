@@ -116,24 +116,3 @@ Below are the quick steps to connect your Colander to yoyr Threatr
 **note:** You can also run `docker compose up -d` but you'll not get access to Traefik's dashboard nor generate a self signed certificate.
 `compose.yml` is the base file can be used as a base for production deployments. `compose-dev.yml` overrides some of the service definitions
 of the `compose.yml`.
-
-
-
----
-
-
-TODO:
-
-- [ ] publish a .zip archive on colander-ansible Github Pages, this archive is a dump of the docker folder of this repository
-- [ ] polish the readme
-- [ ] polish .env file
-- [x] move .env to .env.example on the repository
-- [x] avoir un init container off par défaut, lancé à la demande pour générer un .env safe
----
-- [ ] hardening: readonly/tmpfs containers, cap_drop ALL, security_opt no-new-privileges security_opts ; .... https://docs.docker.com/compose/trust-model/
-- [ ] dans `roles/colander/tasks/configure.yml`, les dockerfile postgres et traefik ont été déplacés vers docker/compose/{postgres,traefik}/Dockerfile.
-      il faut s'assurer qu'on a pas besoin de surcharger ça avec ansible ; ou du moins gérer le build des images basé
-      sur un env ou équivalent :
-      `./templates/traefik/Dockerfile.j2`
-      `./templates/postgres/Dockerfile.j2`
-- [ ] # FIXME implement: stack.services.traefik.vars.enable_dashboard
