@@ -8,6 +8,14 @@ only the component(s) you want.
 The following tools should work with their default configuration. If you want to customize your deployment, you can copy `.env.example` to `.env` and
 edit the settings exposed there to match your requirements.
 
+### Before starting
+
+You first need a basic .env file with django secret key for colander/threatr and minio access/secret keys:
+
+```bash
+docker compose -f compose-init.yml up -d
+```
+
 ### Start colander only
 
 ```bash
@@ -116,10 +124,11 @@ of the `compose.yml`.
 
 TODO:
 
-- [ ] publish a .zip archive on colander-ansible package registry, this archive is a dump of the docker folder of this repository
+- [ ] publish a .zip archive on colander-ansible Github Pages, this archive is a dump of the docker folder of this repository
 - [ ] polish the readme
 - [ ] polish .env file
-- [ ] move .env to .env.example on the repository
+- [x] move .env to .env.example on the repository
+- [x] avoir un init container off par défaut, lancé à la demande pour générer un .env safe
 ---
 - [ ] hardening: readonly/tmpfs containers, cap_drop ALL, security_opt no-new-privileges security_opts ; .... https://docs.docker.com/compose/trust-model/
 - [ ] dans `roles/colander/tasks/configure.yml`, les dockerfile postgres et traefik ont été déplacés vers docker/compose/{postgres,traefik}/Dockerfile.

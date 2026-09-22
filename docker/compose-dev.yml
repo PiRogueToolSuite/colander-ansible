@@ -10,7 +10,7 @@ services:
     init: true
     volumes:
       - ./data/traefik/certs/:/etc/traefik/certs
-    command: >
+    command: |
       sh -c "
         SELF_SIGNED_PATH=/etc/traefik/certs/self-signed
         CERT_PATH=$$SELF_SIGNED_PATH/cert.pem
