@@ -35,7 +35,7 @@ jobs:
         uses: actions/configure-pages@v5
       - name: "zip the out folder"
         run: |
-          apt-get update -y && apt-get install -y md2html gettext
+          sudo apt-get update -y && sudo apt-get install -y md2html gettext
           mkdir -p public/
           md2html --github --output=public/index.html docker/README.md
           export CONTENT=$(md2html --github docker/README.md) ; cat docker/docs/template.html | envsubst > public/index.html
