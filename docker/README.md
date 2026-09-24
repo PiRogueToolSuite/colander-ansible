@@ -8,17 +8,17 @@
 
 You can download colander quick deploy [from here](./colander-quick-deploy.zip)
 
-# Using docker to deploy the PTS stack.
+## Using docker to deploy the PTS stack.
 
 This folder contains the docker compose definition files which allows you to deploy the whole PTS stack or pick
 only the component(s) you want.
 
-## Starting the components you need (self-service/standalone mode)
+### Starting the components you need (self-service/standalone mode)
 
 The following tools should work with their default configuration. If you want to customize your deployment, you can copy `.env.example` to `.env` and
 edit the settings exposed there to match your requirements.
 
-### Before starting
+#### Before starting
 
 You first need a basic .env file with django secret key for colander/threatr and minio access/secret keys:
 
@@ -26,7 +26,7 @@ You first need a basic .env file with django secret key for colander/threatr and
 docker compose -f compose-init.yml up -d
 ```
 
-### Start colander only
+#### Start colander only
 
 ```bash
 docker compose -f compose-colander.yml up -d
@@ -36,7 +36,7 @@ By default, colander should be available at:
 - [http://localhost:5000](http://localhost:5000)
 - [https://colander.local:4443](https://colander.local:4443) (if you put `colander.local` as additional hostname on line starting by `127.0.0.1`)
 
-### Start threatr only
+#### Start threatr only
 
 ```bash
 docker compose -f compose-threatr.yml up -d
@@ -46,7 +46,7 @@ By default, threatr should be available at:
 - [http://localhost:5001](http://localhost:5001)
 - [https://threatr.local:4443](https://threatr.local:4443) (if you put `threatr.local` as additional hostname on line starting by `127.0.0.1`)
 
-### Start mandolin only
+#### Start mandolin only
 
 ```bash
 docker compose -f compose-mandolin.yml up -d
@@ -56,7 +56,7 @@ By default, mandolin should be available at:
 - [http://localhost:5002](http://localhost:5002)
 - [https://mandolin.local:4443](https://mandolin.local:4443) (if you put `mandolin.local` as additional hostname on line starting by `127.0.0.1`)
 
-### Start cyberchef only
+#### Start cyberchef only
 
 ```bash
 docker compose -f compose-cyberchef.yml up -d
@@ -66,7 +66,7 @@ By default, mandolin should be available at:
 - [http://localhost:5003](http://localhost:5003)
 - [https://cyberchef.local:4443](https://cyberchef.local:4443) (if you put `cyberchef.local` as additional hostname on line starting by `127.0.0.1`)
 
-## Starting a "à la carte" stack (multiple tools)
+### Starting a "à la carte" stack (multiple tools)
 
 Of course, you can pick more than one tool by giving the corresponding compose file as a value of `-f` argument of
 the docker compose CLI:
@@ -75,7 +75,7 @@ the docker compose CLI:
 docker compose -f compose-colander.yml -f compose-threatr.yml up -d
 ```
 
-## Starting the whole stack
+### Starting the whole stack
 
 The following command should get you up and running fairly quickly (by default, you may be able to start straight away.
 But in some case you may need to adjust the `.env` file, so take a look to it. It should be self-explanatory):
@@ -108,7 +108,7 @@ Note: those tools can also be accessed through their respectie hostnames (if you
   - [Cyberchef](https://cyberchef.local:4443/)
   - [Traefik dashboard](http://traefik.local:8080/)
 
-## Creating a Threatr integration for your colander
+### Creating a Threatr integration for your colander
 
 Below are the quick steps to connect your Colander to yoyr Threatr
 (this is also [documented on our website](https://pts-project.org/docs/colander/deployment/#connecting-colander-to-threatr)):
