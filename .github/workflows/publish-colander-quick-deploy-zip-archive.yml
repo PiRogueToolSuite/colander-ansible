@@ -39,6 +39,7 @@ jobs:
         run: |
           apt-get update -y && apt-get install -y md2html gettext zip
           mkdir -p public/
+          cp docker/docs/android-chrome-512x512.png public/
           md2html --github --output=public/index.html docker/README.md
           export CONTENT=$(md2html --github docker/README.md) ; cat docker/docs/template.html | envsubst > public/index.html
           zip -r public/colander-quick-deploy.zip docker
