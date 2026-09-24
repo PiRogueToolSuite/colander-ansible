@@ -16,28 +16,29 @@ You'll need [docker and docker compose](https://docs.docker.com/compose/install/
 
 You can download colander quick deploy [from here](./colander-quick-deploy.zip).
 
-This is licensed under GPLv3. You can find the sources on [our Github repository](https://github.com/PiRogueToolSuite/colander-ansible/tree/feat/compose-standalone).
+This is licensed under GPLv3. You can find the sources on [our Github repository](https://github.com/PiRogueToolSuite/colander-ansible/tree/feat/compose-standalone) (the archive above is based on `colander-ansible/docker` folder).
 
 ## Using docker to deploy the PTS stack.
-
-The provided archive is based on [colander-ansible/docker]() folder. It contains the definition of the
-PTS' architecture using docker compose.
 
 You can start some of the tools (using `docker compose -f compose-xxx.yml up -d` command like described
 below) or you can start the whole stack by just going with `docker compose up -d`
 
-### Starting the components you need (self-service/standalone mode)
-
-The following tools should work with their default configuration. If you want to customize your deployment, you can copy `.env.example` to `.env` and
-edit the settings exposed there to match your requirements.
-
 #### Before starting
 
-You first need a basic .env file with django secret key for colander/threatr and minio access/secret keys:
+Most of the settings are pre-configured with sanely safe defaults. Some others are required before starting.
+
+To boostrap your environment, please run `compose-init.yml` first:
 
 ```bash
 docker compose -f compose-init.yml up -d
 ```
+
+This will bootstrap a minimal `.env` file which will be used by docker. It contains some secrets
+randomly generated for you.
+
+If you want more control over how things are configured, please take a look at `.env.example`. There,
+you'll find all the settings available with some comments that should help you in getting the hands on
+PTS' configuration.
 
 #### Start colander only
 
