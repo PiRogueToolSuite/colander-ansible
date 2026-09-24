@@ -23,7 +23,7 @@ This is licensed under GPLv3. You can find the sources on [our Github repository
 You can start some of the tools (using `docker compose -f compose-xxx.yml up -d` command like described
 below) or you can start the whole stack by just going with `docker compose up -d`
 
-#### Before starting
+### Before starting
 
 Most of the settings are pre-configured with sanely safe defaults. Some others are required before starting.
 
@@ -40,7 +40,7 @@ If you want more control over how things are configured, please take a look at `
 you'll find all the settings available with some comments that should help you in getting the hands on
 PTS' configuration.
 
-#### Start colander only
+### Start colander only
 
 ```bash
 docker compose -f compose-colander.yml up -d
@@ -50,7 +50,7 @@ By default, colander should be available at:
 - [http://localhost:5000](http://localhost:5000)
 - [https://colander.local:4443](https://colander.local:4443) (if you put `colander.local` as additional hostname on line starting by `127.0.0.1`)
 
-#### Start threatr only
+### Start threatr only
 
 ```bash
 docker compose -f compose-threatr.yml up -d
@@ -60,7 +60,7 @@ By default, threatr should be available at:
 - [http://localhost:5001](http://localhost:5001)
 - [https://threatr.local:4443](https://threatr.local:4443) (if you put `threatr.local` as additional hostname on line starting by `127.0.0.1`)
 
-#### Start mandolin only
+### Start mandolin only
 
 ```bash
 docker compose -f compose-mandolin.yml up -d
@@ -70,7 +70,7 @@ By default, mandolin should be available at:
 - [http://localhost:5002](http://localhost:5002)
 - [https://mandolin.local:4443](https://mandolin.local:4443) (if you put `mandolin.local` as additional hostname on line starting by `127.0.0.1`)
 
-#### Start cyberchef only
+### Start cyberchef only
 
 ```bash
 docker compose -f compose-cyberchef.yml up -d
@@ -122,7 +122,7 @@ Note: those tools can also be accessed through their respectie hostnames (if you
   - [Cyberchef](https://cyberchef.local:4443/)
   - [Traefik dashboard](http://traefik.local:8080/)
 
-### Creating a Threatr integration for your colander
+## Creating a Threatr integration for your colander
 
 Below are the quick steps to connect your Colander to yoyr Threatr
 (this is also [documented on our website](https://pts-project.org/docs/colander/deployment/#connecting-colander-to-threatr)):
