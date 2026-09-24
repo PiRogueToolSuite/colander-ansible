@@ -27,15 +27,17 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: debian-latest
+    runs-on: ubuntu-latest
+    container:
+      image: debian:trixie
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: "zip the out folder"
+      - name: "publish the static website for colander quick deploy (static landing page from docker/README.md + zip file of docker folder"
         run: |
-          sudo apt-get update -y && sudo apt-get install -y md2html gettext
+          apt-get update -y && apt-get install -y md2html gettext zip
           mkdir -p public/
           md2html --github --output=public/index.html docker/README.md
           export CONTENT=$(md2html --github docker/README.md) ; cat docker/docs/template.html | envsubst > public/index.html
