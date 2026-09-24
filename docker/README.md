@@ -14,7 +14,9 @@ You'll need [docker and docker compose](https://docs.docker.com/compose/install/
 
 ## Download
 
-You can download colander quick deploy [from here](./colander-quick-deploy.zip)
+You can download colander quick deploy [from here](./colander-quick-deploy.zip).
+
+This is licensed under GPLv3. You can find the sources on [our Github repository](https://github.com/PiRogueToolSuite/colander-ansible).
 
 ## Using docker to deploy the PTS stack.
 
