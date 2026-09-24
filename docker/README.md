@@ -1,5 +1,5 @@
 <div style="display: flex; align-items: center; flex-direction: column;">
-  <img src="./android-chrome-512x512.png" alt="Alt Text" style="max-width: 100px;">
+  <img src="./android-chrome-512x512.png" alt="PTS logo" style="max-width: 100px;">
 </div>
 
 # Colander quick deploy
