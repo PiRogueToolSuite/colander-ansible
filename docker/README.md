@@ -1,3 +1,13 @@
+<div style="display: flex; align-items: center; flex-direction: column;">
+  <img src="./android-chrome-512x512.png" alt="Alt Text" style="max-width: 100px;">
+</div>
+
+# Colander quick deploy
+
+## Download
+
+You can download colander quick deploy [from here](./colander-quick-deploy.zip)
+
 # Using docker to deploy the PTS stack.
 
 This folder contains the docker compose definition files which allows you to deploy the whole PTS stack or pick
