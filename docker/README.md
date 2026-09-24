@@ -4,14 +4,25 @@
 
 # Colander quick deploy
 
+Welcome to Colander quick deploy.
+
+Here you'll find all the necessary resources to get the entire Colander stack up and running as quickly as possible (or just the components you're interested in).
+
+## Requirements
+
+You'll need [docker and docker compose](https://docs.docker.com/compose/install/).
+
 ## Download
 
 You can download colander quick deploy [from here](./colander-quick-deploy.zip)
 
 ## Using docker to deploy the PTS stack.
 
-This folder contains the docker compose definition files which allows you to deploy the whole PTS stack or pick
-only the component(s) you want.
+The provided archive is based on [colander-ansible/docker]() folder. It contains the definition of the
+PTS' architecture using docker compose.
+
+You can start some of the tools (using `docker compose -f compose-xxx.yml up -d` command like described
+below) or you can start the whole stack by just going with `docker compose up -d`
 
 ### Starting the components you need (self-service/standalone mode)
 
