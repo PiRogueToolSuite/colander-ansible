@@ -26,21 +26,22 @@
     - '{{ stack.services.threatr_postgres.volumes.backups }}'
     - '{{ stack.services.elasticsearch.volumes.data }}'
 
-- name: Generate Docker Compose file
-  become: false
-  ansible.builtin.template:
-    src: './templates/{{ compose_file_template }}'
-    dest: '{{ colander_installation_path }}/{{ compose_file }}'
-    mode: '0644'
-    force: true
-  register: configuration
+# TODO : faudra voir ce qu'on fait des tâches commentées ci-dessous ou non (notamment les scripts)
+# - name: Generate Docker Compose file
+#   become: false
+#   ansible.builtin.template:
+#     src: './templates/{{ compose_file_template }}'
+#     dest: '{{ colander_installation_path }}/{{ compose_file }}'
+#     mode: '0644'
+#     force: true
+#   register: configuration
 
-- name: Copy Postgres scripts
-  become: false
-  ansible.builtin.copy:
-    src: './files/postgres'
-    dest: '{{ colander_installation_path }}/compose/'
-    force: true
+# - name: Copy Postgres scripts
+#   become: false
+#   ansible.builtin.copy:
+#     src: './files/postgres'
+#     dest: '{{ colander_installation_path }}/compose/'
+#     force: true
 
 - name: Copy backup script
   become: false
@@ -58,26 +59,27 @@
     force: true
     mode: 0744
 
-- name: Generate services configuration
-  become: false
-  ansible.builtin.template:
-    src: '{{ item.src }}'
-    dest: '{{ item.dest }}'
-    mode: '0644'
-    force: true
-  loop:
-    - {
-      src: './templates/traefik/Dockerfile.j2',
-      dest: '{{ colander_installation_path }}/compose/traefik/Dockerfile'
-    }
-    - {
-      src: './templates/traefik/traefik.yml.j2',
-      dest: '{{ colander_installation_path }}/compose/traefik/traefik.yml'
-    }
-    - {
-      src: './templates/postgres/Dockerfile.j2',
-      dest: '{{ colander_installation_path }}/compose/postgres/Dockerfile'
-    }
+# TODO: faudra probablement refaire ça en utilisant le .env à présent
+# - name: Generate services configuration
+#   become: false
+#   ansible.builtin.template:
+#     src: '{{ item.src }}'
+#     dest: '{{ item.dest }}'
+#     mode: '0644'
+#     force: true
+#   loop:
+#     # - {
+#     #   src: './templates/traefik/Dockerfile.j2',
+#     #   dest: '{{ colander_installation_path }}/compose/traefik/Dockerfile'
+#     # }
+#     # - {
+#     #   src: './templates/traefik/traefik.yml.j2',
+#     #   dest: '{{ colander_installation_path }}/compose/traefik/traefik.yml'
+#     # }
+#     # - {
+#     #   src: './templates/postgres/Dockerfile.j2',
+#     #   dest: '{{ colander_installation_path }}/compose/postgres/Dockerfile'
+#     # }
 
 - name: Generate .env files
   become: false

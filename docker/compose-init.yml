@@ -1,0 +1,20 @@
+# This compose file allows you to provision a basic .env file in an easy and cross-platform way
+
+services:
+  init-env:
+    image: alpine:latest
+    init: true
+    command: |
+      sh -c "
+      apk add pwgen
+
+      tee /.env <<EOF
+      # DOCKER_SOCKET_PATH=/run/user/1000/docker.sock
+      COLANDER_IMAGE_VERSION=next
+      COLANDER_DJANGO_SECRET_KEY=$(pwgen 40)
+      THREATR_DJANGO_SECRET_KEY=$(pwgen 40)
+      MINIO_ACCESS_KEY=$(pwgen 40)
+      MINIO_SECRET_KEY=$(pwgen 40)
+      "
+    volumes:
+      - ./.env:/.env

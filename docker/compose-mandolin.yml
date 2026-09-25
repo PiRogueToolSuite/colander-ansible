@@ -1,0 +1,87 @@
+include:
+  - compose-base.yml
+
+services:
+  # ----------------------------
+  # Mandolin
+  # ----------------------------
+  tika:
+    image: "apache/tika:${TIKA_IMAGE_VERSION:-3.0.0.0-full}"
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    healthcheck:
+      test: [ "CMD", "wget", "-O", "/dev/null", "http://localhost:9998/tika" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: tika
+      colander.service.type: backend
+
+  # ----------------------------
+  # ClamAV
+  # ----------------------------
+  clamav:
+    mem_reservation: 262144000
+    mem_limit: 1048576000
+    # TODO fixer la version de CLAMAV
+    image: ajilaag/clamav-rest
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+      - frontend
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:9000/"]
+      interval: 60s
+      timeout: 2s
+      retries: 2
+      # ClamAV and the virus DB load can take a while on cold start, so allow extra startup time
+      # before Compose starts counting healthcheck failures against the container.
+      start_period: 210s
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: clamav
+      colander.service.type: backend
+
+  # ----------------------------
+  # Mandolin
+  # ----------------------------
+  mandolin:
+    image: "ghcr.io/piroguetoolsuite/mandolin:${MANDOLIN_IMAGE_VERSION:-main}"
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    ports:
+      - 127.0.0.1:5002:8000
+    depends_on:
+      clamav:
+        condition: service_started
+      tika:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "-O", "/dev/null", "http://localhost:8000/" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    environment:
+      - TIKA_URL=http://tika:9998/
+      - CLAMAV_URL=http://clamav:9000/
+      - MAX_FILE_SIZE=250000000  # 250MB
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: mandolin
+      colander.service.type: backend

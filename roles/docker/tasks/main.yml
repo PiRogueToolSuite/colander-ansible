@@ -46,7 +46,7 @@
   loop:
     - docker.service
     - containerd.service
-  when: not docker_rootless  
+  when: not docker_rootless
 
 - include_tasks: rootless.yml
   when: docker_rootless

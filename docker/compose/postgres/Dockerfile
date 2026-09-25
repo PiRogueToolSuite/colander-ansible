@@ -1,4 +1,5 @@
-FROM postgres:14
+ARG POSTGRES_IMAGE_VERSION=latest
+FROM postgres:$POSTGRES_IMAGE_VERSION
 
 COPY ./compose/postgres/maintenance /usr/local/bin/maintenance
 RUN chmod +x /usr/local/bin/maintenance/*

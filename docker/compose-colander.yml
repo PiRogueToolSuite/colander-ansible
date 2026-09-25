@@ -1,0 +1,187 @@
+include:
+  - compose-base.yml
+
+x-base_env: &base_env
+  USE_DOCKER: True
+  COLANDER_BASE_URL: ${COLANDER_BASE_URL:-https://${COLANDER_FQDN:-colander.local}}
+  CYBERCHEF_BASE_URL:  ${CYBERCHEF_BASE_URL:-https://cyberchef.local}
+  MANDOLIN_BASE_URL: ${MANDOLIN_BASE_URL:-http://mandolin:8000}
+  THREATR_BASE_URL: ${THREATR_BASE_URL:-http://threatr-front:5000}
+  ACME_EMAIL:  ${BASE_ACME_EMAIL:-admin@local.host}
+  ADMIN_NAME:  ${BASE_ADMIN_NAME:-admin}
+  ADMIN_EMAIL:  ${BASE_ADMIN_EMAIL:-admin@local.host}
+  DJANGO_DEFAULT_FROM_EMAIL:  ${BASE_DJANGO_DEFAULT_FROM_EMAIL:-admin@local.host}
+  EMAIL_HOST:  ${BASE_EMAIL_HOST:-mailhog}
+  EMAIL_HOST_USER:  ${BASE_EMAIL_HOST_USER:-postmaster@local.host}
+  EMAIL_HOST_PASSWORD:  ${BASE_EMAIL_HOST_PASSWORD:-}
+  EMAIL_PORT:  ${BASE_EMAIL_PORT:-25}
+  EMAIL_USE_TLS:  ${BASE_EMAIL_USE_TLS:-False}
+  EMAIL_USE_SSL:  ${BASE_EMAIL_USE_SSL:-False}
+  LICENSE_ENABLED: True
+
+x-minio_env: &minio_env
+  # MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
+  # MINIO_ENDPOINT: "rustfs:9000"
+  MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?missing minio access key}
+  MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?missing minio secret key}
+
+x-colander_postgres_env: &colander_postgres_env
+  POSTGRES_HOST: ${COLANDER_POSTGRES_POSTGRES_HOST:-colander-postgres}
+  POSTGRES_PORT: ${COLANDER_POSTGRES_POSTGRES_PORT:-5432}
+  POSTGRES_DB: ${COLANDER_POSTGRES_POSTGRES_DB:-colander}
+  POSTGRES_USER: ${COLANDER_POSTGRES_POSTGRES_USER:-postgres}
+  POSTGRES_PASSWORD: ${COLANDER_POSTGRES_POSTGRES_PASSWORD:-pgpassword}
+  PGDATABASE: ${COLANDER_POSTGRES_PGDATABASE:-colander}
+  PGUSER: ${COLANDER_POSTGRES_PGUSER:-postgres}
+
+services:
+  # ----------------------------
+  # Minio
+  # ----------------------------
+  minio:
+    image: "quay.io/minio/minio:${MINIO_IMAGE_VERSION:-RELEASE.2025-09-07T16-13-09Z.hotfix.7aa24e772}"
+    command: server /data
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - backend
+    volumes:
+      - ${MINIO_VOLUME_PATH:-production_minio_data}:/data
+    environment:
+      <<: *minio_env
+    labels:
+      colander.service.name: minio
+      colander.service.type: storage
+
+  # ----------------------------
+  # Colander
+  # ----------------------------
+  # Database
+  colander-postgres:
+    # https://github.com/PiRogueToolSuite/postgres/pkgs/container/postgres/versions
+    image: "ghcr.io/piroguetoolsuite/postgres:${COLANDER_POSTGRES_IMAGE_VERSION:-main}"
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+    volumes:
+      - "${COLANDER_POSTGRES_DATA_VOLUME_PATH:-production_colander_postgres_data}:/var/lib/postgresql/"
+      - "${COLANDER_POSTGRES_BACKUPS_VOLUME_PATH:-production_colander_postgres_backups}:/backups"
+    environment:
+      <<: *colander_postgres_env
+    labels:
+      colander.service.name: colander-postgres
+      colander.service.type: database
+
+ # Colander Workers
+  colander-worker:
+    image: "ghcr.io/piroguetoolsuite/colander:${COLANDER_IMAGE_VERSION:-main}"
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    depends_on:
+      colander-postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: /start-worker
+    environment:
+      <<: [*base_env, *minio_env, *colander_postgres_env]
+      DJANGO_DEBUG: ${COLANDER_DJANGO_DEBUG:-False}
+      REDIS_URL: ${COLANDER_REDIS_URL:-redis://redis:6379/0}
+      DJANGO_SECURE_SSL_REDIRECT: ${COLANDER_DJANGO_SECURE_SSL_REDIRECT:-True}
+      DJANGO_ACCOUNT_ALLOW_REGISTRATION: ${COLANDER_DJANGO_ACCOUNT_ALLOW_REGISTRATION:-False}
+      DJANGO_SETTINGS_MODULE: ${COLANDER_DJANGO_SETTINGS_MODULE:-config.settings.production}
+      WEB_CONCURRENCY: ${COLANDER_WEB_CONCURRENCY:-4}
+      DJANGO_ALLOWED_HOSTS: ${COLANDER_DJANGO_ALLOWED_HOSTS:-${COLANDER_FQDN:-colander.local},colander-front}
+      DJANGO_SECRET_KEY: ${COLANDER_DJANGO_SECRET_KEY:?colander django secret key is required}
+      DJANGO_ADMIN_URL: ${COLANDER_DJANGO_ADMIN_URL:-admin/}
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: colander-worker
+      colander.service.type: worker
+
+  # Web front
+  colander-front:
+    extends: colander-worker
+    healthcheck:
+      test: [ "CMD", "grep", "-q", ":1388", "/proc/net/tcp" ]
+      interval: 30s
+      timeout: 2s
+      retries: 5
+    depends_on:
+      colander-worker:
+        condition: service_started
+    command: /start
+    # networks: !override
+    networks:
+      - frontend
+    ports:
+      - 127.0.0.1:5000:5000
+    labels:
+      colander.service.name: colander-front
+      colander.service.type: web
+      traefik.enable: "true"
+      traefik.http.routers.colander.rule: "Host(`${COLANDER_FQDN:-colander.local}`)"
+      traefik.http.routers.colander.entrypoints: "websecure"
+      traefik.http.routers.colander.middlewares: "compress-http,csrf"
+      traefik.http.routers.colander.tls.certResolver: "letsencrypt"
+      # https://github.com/traefik/traefik/issues/1156#issuecomment-287387666
+      traefik.docker.network: "docker_frontend"
+      # # https://doc.traefik.io/traefik/middlewares/http/compress/
+      # traefik.http.middlewares.compress-http.compress: true
+      # # https://docs.traefik.io/master/middlewares/headers/#hostsproxyheaders
+      # # https://docs.djangoproject.com/fr/4.2/ref/settings/#csrf-header-name
+      # traefik.http.middlewares.csrf.headers.hostsProxyHeaders: "X-CSRFToken"
+
+  # ----------------------------
+  # Playwright
+  # ----------------------------
+  # This service is used when you go in Colander and use the feature Collect -> URL -> Capture
+  playwright:
+    image: "ghcr.io/piroguetoolsuite/playwright-rest-api:${PLAYWRIGHT_IMAGE_VERSION:-main}"
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: playwright
+      colander.service.type: backend
+
+volumes:
+  # Volume for minio data
+  production_minio_data:
+
+  # Volume for colander-postgres data
+  production_colander_postgres_data:
+
+  # Volume for colander-postgres backups
+  production_colander_postgres_backups:

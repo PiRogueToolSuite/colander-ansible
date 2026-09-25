@@ -1,0 +1,28 @@
+include:
+  - compose-colander.yml
+  - compose-cyberchef.yml
+  - compose-threatr.yml
+  - compose-mandolin.yml
+
+  # FIXME: implement:
+  #   {% if flavor.use_cyberchef %} / BASE_USE_CYBERCHEF
+  #   {% if flavor.use_mandolin %} / BASE_USE_MANDOLIN
+  #       on colander-worker and colander-front
+  #   {% if flavor.use_threatr %} / BASE_USE_THREATR
+  #       on colander-front
+  #   {% if flavor.use_playwright %} / BASE_USE_PLAYWRIGHT
+  #       on colander-worker and colander-front
+  #
+  # this should implement :
+  #   add the needed compose files
+  #   add the required depends_on required
+  #
+  # colander-worker:
+  #   depends_on:
+  #     mandolin:
+  #       condition: service_healthy
+  #
+  # colander-front:
+  #   depends_on:
+  #     mandolin:
+  #       condition: service_healthy

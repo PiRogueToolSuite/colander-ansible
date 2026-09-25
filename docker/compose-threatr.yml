@@ -1,0 +1,138 @@
+include:
+  - compose-base.yml
+  - compose-volumes.yml
+
+x-base_env: &base_env
+  USE_DOCKER: True
+  COLANDER_BASE_URL: ${COLANDER_BASE_URL:-https://${COLANDER_FQDN:-colander.local}}
+  THREATR_BASE_URL: ${THREATR_BASE_URL:-http://threatr-front:5000}
+  CYBERCHEF_BASE_URL:  ${CYBERCHEF_BASE_URL:-https://cyberchef.local}
+  ACME_EMAIL:  ${BASE_ACME_EMAIL:-admin@local.host}
+  ADMIN_NAME:  ${BASE_ADMIN_NAME:-admin}
+  ADMIN_EMAIL:  ${BASE_ADMIN_EMAIL:-admin@local.host}
+  DJANGO_DEFAULT_FROM_EMAIL:  ${BASE_DJANGO_DEFAULT_FROM_EMAIL:-admin@local.host}
+  EMAIL_HOST:  ${BASE_EMAIL_HOST:-mailhog}
+  EMAIL_HOST_USER:  ${BASE_EMAIL_HOST_USER:-postmaster@local.host}
+  EMAIL_HOST_PASSWORD:  ${BASE_EMAIL_HOST_PASSWORD:-}
+  EMAIL_PORT:  ${BASE_EMAIL_PORT:-25}
+  EMAIL_USE_TLS:  ${BASE_EMAIL_USE_TLS:-False}
+  EMAIL_USE_SSL:  ${BASE_EMAIL_USE_SSL:-False}
+  LICENSE_ENABLED: True
+
+x-threatr_env: &threatr_env
+  DJANGO_DEBUG: ${THREATR_DJANGO_DEBUG:-False}
+  REDIS_URL: ${THREATR_REDIS_URL:-redis://redis:6379/0}
+  DJANGO_SECURE_SSL_REDIRECT: "false"
+  WEB_CONCURRENCY: "4"
+  DJANGO_SETTINGS_MODULE: "config.settings.production"
+  DJANGO_ACCOUNT_ALLOW_REGISTRATION: "False"
+  DJANGO_ALLOWED_HOSTS: "${THREATR_DJANGO_ALLOWED_HOSTS:-${THREATR_FQDN:-threatr.local},threatr-front,localhost,127.0.0.1}"
+  DJANGO_SECRET_KEY: "${THREATR_DJANGO_SECRET_KEY:?threatr django secret key is required}"
+  DJANGO_ADMIN_URL: "${THREATR_DJANGO_ADMIN_URL:-admin/}"
+
+x-threater_postgres_env: &threater_postgres_env
+  POSTGRES_HOST: ${THREATR_POSTGRES_POSTGRES_HOST:-threatr-postgres}
+  POSTGRES_PORT: ${THREATR_POSTGRES_POSTGRES_PORT:-5432}
+  POSTGRES_DB: ${THREATR_POSTGRES_PGDATABASE:-threatr}
+  POSTGRES_USER: ${THREATR_POSTGRES_POSTGRES_USER:-postgres}
+  POSTGRES_PASSWORD: ${THREATR_POSTGRES_POSTGRES_PASSWORD:-pgpassword}
+  PGDATABASE: ${THREATR_POSTGRES_PGDATABASE:-threatr}
+  PGUSER: ${THREATR_POSTGRES_PGUSER:-postgres}
+
+services:
+  # ----------------------------
+  # Threatr
+  # ----------------------------
+  # Database
+  threatr-postgres:
+    # https://github.com/PiRogueToolSuite/postgres/pkgs/container/postgres/versions
+    image: "ghcr.io/piroguetoolsuite/postgres:${THREATR_POSTGRES_IMAGE_VERSION:-main}"
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+    volumes:
+      - ${THREATR_POSTGRES_DATA_VOLUME_PATH:-production_threatr_postgres_data}:/var/lib/postgresql
+      - ${THREATR_POSTGRES_BACKUPS_VOLUME_PATH:-production_threatr_postgres_backups}:/backups
+    environment:
+      <<: *threater_postgres_env # {{ stack.services.threatr_postgres.dot_env_file}}
+    labels:
+      colander.service.name: threatr-postgres
+      colander.service.type: database
+
+# Workers
+  threatr-worker:
+    image: "ghcr.io/piroguetoolsuite/threatr:${THREATR_IMAGE_VERSION:-main}"
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    depends_on:
+      threatr-postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: /start-worker
+    environment:
+      # FIXME: {{ stack.base.dot_env_file}}, {{ stack.services.threatr.dot_env_file}}, {{ stack.services.threatr_postgres.dot_env_file}}
+      <<: [*base_env, *threatr_env, *threater_postgres_env]
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: threatr-worker
+      colander.service.type: worker
+
+  # ----------------------------
+  # Threatr: {{ flavor.use_threatr }}
+  # ----------------------------
+  # FIXME: implement this
+  # {% if flavor.use_threatr %}
+  # Web front
+  threatr-front:
+    extends: threatr-worker
+    healthcheck:
+      test: [ "CMD", "grep", "-q", ":1388", "/proc/net/tcp" ]
+      interval: 30s
+      timeout: 2s
+      retries: 5
+    depends_on:
+      threatr-worker:
+        condition: service_started
+    command: /start
+    networks:
+      - frontend
+    ports:
+      - 127.0.0.1:5001:5000
+    labels:
+      colander.service.name: threatr-front
+      colander.service.type: web
+      traefik.enable: "true"
+      # https://doc.traefik.io/traefik/middlewares/http/compress/
+      traefik.http.middlewares.compress-http.compress: true
+      # https://docs.djangoproject.com/fr/4.2/ref/settings/#csrf-header-name
+      traefik.http.middlewares.csrf.headers.hostsProxyHeaders: "X-CSRFToken"
+      traefik.http.routers.threatr.rule: "Host(`${THREATR_FQDN:-threatr.local}`)"
+      traefik.http.routers.threatr.entrypoints: "websecure"
+      traefik.http.routers.threatr.middlewares: "compress-http,csrf"
+      traefik.http.routers.threatr.tls.certResolver: "letsencrypt"
+      # https://github.com/traefik/traefik/issues/1156#issuecomment-287387666
+      traefik.docker.network: "docker_frontend"
+
+volumes:
+  # Volume for threatr-postges data
+  production_threatr_postgres_data:
+
+  # Volume for threatr-postgres backups
+  production_threatr_postgres_backups:

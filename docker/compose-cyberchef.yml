@@ -1,0 +1,31 @@
+include:
+  - compose-base.yml
+services:
+  # ----------------------------
+  # Cyberchef
+  # ----------------------------
+  cyberchef:
+    image: "mpepping/cyberchef:${CYBERCHEF_IMAGE_VERSION:-v11.4.0}"
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - frontend
+    ports:
+      - 127.0.0.1:5003:8000
+    labels:
+      com.centurylinklabs.watchtower.enable: false
+      colander.service.name: cyberchef
+      colander.service.type: web
+      traefik.enable: "true"
+      # https://doc.traefik.io/traefik/middlewares/http/compress/
+      traefik.http.middlewares.compress-http.compress: true
+      # https://docs.djangoproject.com/fr/4.2/ref/settings/#csrf-header-name
+      traefik.http.middlewares.csrf.headers.hostsProxyHeaders: "X-CSRFToken"
+      traefik.http.routers.cyberchef.rule: "Host(`${CYBERCHEF_FQDN:-cyberchef.local}`)"
+      traefik.http.routers.cyberchef.entrypoints: "websecure"
+      traefik.http.routers.cyberchef.middlewares: "compress-http,csrf"
+      traefik.http.routers.cyberchef.tls.certResolver: "letsencrypt"
+      traefik.docker.network: "frontend"

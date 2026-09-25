@@ -1,0 +1,142 @@
+include:
+  - compose-networks.yml
+  - compose-volumes.yml
+
+services:
+  # ----------------------------
+  # Load balancers - Reverse proxy
+  # ----------------------------
+  traefik:
+    image: traefik:${TRAEFIK_IMAGE_VERSION:-v3.7}
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - frontend
+    environment:
+      TRAEFIK_DASHBOARD_FQDN: "${TRAEFIK_DASHBOARD_FQDN:-traefik.local}"
+      COLANDER_FQDN: "${COLANDER_FQDN:-colander.local}"
+      THREATR_FQDN: "${THREATR_FQDN:-threatr.local}"
+      CYBERCHEF_FQDN: "${CYBERCHEF_FQDN:-cyberchef.local}"
+      # LETSENCRYPT_ENABLED: "null"
+      # TRAEFIK_ENTRYPOINTS_WEBSECURE_HTTP_TLS_CERTRESOLVER: letsencrypt
+      TRAEFIK_ROUTERS_DASHBOARD_TLS_CERTRESOLVER: letsencrypt
+    volumes:
+      # FIXME use docker volumes
+      - ${TRAEFIK_VOLUME_PATH:-production_traefik}:/etc/traefik/acme
+      - ${TRAEFIK_LOGS_VOLUME_PATH:-production_traefik_logs}:/logs/
+      # - ./compose/traefik/traefik.yml:/etc/traefik/traefik.yml
+      - "${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro"
+    command:
+      # following args are common to the ones defined in compose-dev.yml
+      - "--log.level=${TRAEFIK_LOG_LEVEL:-ERROR}"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=frontend"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entryPoint.permanent=true"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.asDefault=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${TRAEFIK_CERTIFICATESRESOLVER_LETSENCRYPT_ACME_EMAIL:-letsencrypt@localhost}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+    ports:
+      - "${TRAEFIK_HTTP_BINDING:-127.0.0.1:8000}:80"
+      - "${TRAEFIK_HTTPS_BINDING:-127.0.0.1:4443}:443"
+    labels:
+      colander.service.name: traefik
+      colander.service.type: proxy
+
+  # ----------------------------
+  # Elasticsearch
+  # ----------------------------
+  elasticsearch:
+    image: "elasticsearch:${ELASTICSEARCH_IMAGE_VERSION:-8.4.1}"
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    # user: 1000:1000
+    volumes:
+      - ${ELASTICSEARCH_VOLUME_PATH:-production_es_data}:/usr/share/elasticsearch/data
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s -X GET http://localhost:9200/_cluster/health?pretty | grep status | grep -q '\\(green\\|yellow\\)'" ]
+      interval: 10s
+      timeout: 10s
+      retries: 24
+    environment:
+      - logger.level=WARN
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      # - path.repo=/usr/share/elasticsearch/data/snapshots
+      - path.repo=/usr/share/elasticsearch/data
+      - ES_JAVA_OPTS=-Xms${ELASTICSEARCH_ES_JAVA_OPTS_XMS:-2048m} -Xmx${ELASTICSEARCH_ES_JAVA_OPTS_XMX:-2048m}
+    labels:
+      colander.service.name: elasticsearch
+      colander.service.type: database
+
+  # ----------------------------
+  # Redis
+  # ----------------------------
+  redis:
+    image: "redis:${REDIS_IMAGE_VERSION:-8}"
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 2s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+    # https://hub.docker.com/_/redis#start-with-persistent-storage
+    volumes:
+      - ${REDIS_VOLUME_PATH:-production_redis_data}:/data
+    command: "redis-server --save 60 1"
+    labels:
+      colander.service.name: redis
+      colander.service.type: database
+
+  watchtower:
+    image: "nickfedor/watchtower:${WATCHTOWER_IMAGE_VERSION:-latest}"
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - backend
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro"
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+      # {{ stack.services.watchtower.environment | to_nice_yaml | indent(6) }}
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      colander.service.name: watchtower
+      colander.service.type: docker
+
+volumes:
+  # Volume for traefik's acme configuration files
+  production_traefik:
+
+  # Volume for traefik logs
+  production_traefik_logs:
+
+  # Volume for elasticsearch data
+  production_es_data:
+
+  # Volume for redis data
+  production_redis_data:
