@@ -47,6 +47,7 @@ docker compose -f compose-colander.yml up -d
 ```
 
 By default, colander should be available at:
+
 - [http://localhost:5000](http://localhost:5000)
 - [https://colander.local:4443](https://colander.local:4443) (if you put `colander.local` as additional hostname on line starting by `127.0.0.1`)
 
@@ -57,6 +58,7 @@ docker compose -f compose-threatr.yml up -d
 ```
 
 By default, threatr should be available at:
+
 - [http://localhost:5001](http://localhost:5001)
 - [https://threatr.local:4443](https://threatr.local:4443) (if you put `threatr.local` as additional hostname on line starting by `127.0.0.1`)
 
@@ -67,6 +69,7 @@ docker compose -f compose-mandolin.yml up -d
 ```
 
 By default, mandolin should be available at:
+
 - [http://localhost:5002](http://localhost:5002)
 - [https://mandolin.local:4443](https://mandolin.local:4443) (if you put `mandolin.local` as additional hostname on line starting by `127.0.0.1`)
 
@@ -77,6 +80,7 @@ docker compose -f compose-cyberchef.yml up -d
 ```
 
 By default, mandolin should be available at:
+
 - [http://localhost:5003](http://localhost:5003)
 - [https://cyberchef.local:4443](https://cyberchef.local:4443) (if you put `cyberchef.local` as additional hostname on line starting by `127.0.0.1`)
 
@@ -117,10 +121,11 @@ This will :
     - [Traefik dashboard](http://localhost:8080/)
 
 Note: those tools can also be accessed through their respectie hostnames (if you add them to your `/etc/hosts` file):
-  - [Colander](https://colander.local:4443/)
-  - [Threatr](https://threatr.local:4443/)
-  - [Cyberchef](https://cyberchef.local:4443/)
-  - [Traefik dashboard](http://traefik.local:8080/)
+
+- [Colander](https://colander.local:4443/)
+- [Threatr](https://threatr.local:4443/)
+- [Cyberchef](https://cyberchef.local:4443/)
+- [Traefik dashboard](http://traefik.local:8080/)
 
 ## Creating a Threatr integration for your colander
 

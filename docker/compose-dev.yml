@@ -73,4 +73,3 @@ services:
       traefik.http.routers.traefik.rule: "Host(`minio.local`)"
       traefik.http.routers.traefik.entrypoints: "websecure"
       traefik.http.routers.traefik.tls: "true"
-

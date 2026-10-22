@@ -6,17 +6,17 @@ x-base_env: &base_env
   USE_DOCKER: True
   COLANDER_BASE_URL: ${COLANDER_BASE_URL:-https://${COLANDER_FQDN:-colander.local}}
   THREATR_BASE_URL: ${THREATR_BASE_URL:-http://threatr-front:5000}
-  CYBERCHEF_BASE_URL:  ${CYBERCHEF_BASE_URL:-https://cyberchef.local}
-  ACME_EMAIL:  ${BASE_ACME_EMAIL:-admin@local.host}
-  ADMIN_NAME:  ${BASE_ADMIN_NAME:-admin}
-  ADMIN_EMAIL:  ${BASE_ADMIN_EMAIL:-admin@local.host}
-  DJANGO_DEFAULT_FROM_EMAIL:  ${BASE_DJANGO_DEFAULT_FROM_EMAIL:-admin@local.host}
-  EMAIL_HOST:  ${BASE_EMAIL_HOST:-mailhog}
-  EMAIL_HOST_USER:  ${BASE_EMAIL_HOST_USER:-postmaster@local.host}
-  EMAIL_HOST_PASSWORD:  ${BASE_EMAIL_HOST_PASSWORD:-}
-  EMAIL_PORT:  ${BASE_EMAIL_PORT:-25}
-  EMAIL_USE_TLS:  ${BASE_EMAIL_USE_TLS:-False}
-  EMAIL_USE_SSL:  ${BASE_EMAIL_USE_SSL:-False}
+  CYBERCHEF_BASE_URL: ${CYBERCHEF_BASE_URL:-https://cyberchef.local}
+  ACME_EMAIL: ${BASE_ACME_EMAIL:-admin@local.host}
+  ADMIN_NAME: ${BASE_ADMIN_NAME:-admin}
+  ADMIN_EMAIL: ${BASE_ADMIN_EMAIL:-admin@local.host}
+  DJANGO_DEFAULT_FROM_EMAIL: ${BASE_DJANGO_DEFAULT_FROM_EMAIL:-admin@local.host}
+  EMAIL_HOST: ${BASE_EMAIL_HOST:-mailhog}
+  EMAIL_HOST_USER: ${BASE_EMAIL_HOST_USER:-postmaster@local.host}
+  EMAIL_HOST_PASSWORD: ${BASE_EMAIL_HOST_PASSWORD:-}
+  EMAIL_PORT: ${BASE_EMAIL_PORT:-25}
+  EMAIL_USE_TLS: ${BASE_EMAIL_USE_TLS:-False}
+  EMAIL_USE_SSL: ${BASE_EMAIL_USE_SSL:-False}
   LICENSE_ENABLED: True
 
 x-threatr_env: &threatr_env
@@ -53,7 +53,7 @@ services:
       options:
         labels: colander.service.name,colander.service.type
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready" ]
+      test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -68,7 +68,7 @@ services:
       colander.service.name: threatr-postgres
       colander.service.type: database
 
-# Workers
+  # Workers
   threatr-worker:
     image: "ghcr.io/piroguetoolsuite/threatr:${THREATR_IMAGE_VERSION:-main}"
     restart: always
@@ -103,7 +103,7 @@ services:
   threatr-front:
     extends: threatr-worker
     healthcheck:
-      test: [ "CMD", "grep", "-q", ":1388", "/proc/net/tcp" ]
+      test: ["CMD", "grep", "-q", ":1388", "/proc/net/tcp"]
       interval: 30s
       timeout: 2s
       retries: 5

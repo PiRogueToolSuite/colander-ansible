@@ -4,8 +4,8 @@ docker_rootless: true
 docker_disable_root_daemon: true
 use_docker_compose: true
 # The default Docker socket location when not used in rootless mode
-docker_host: 'unix:///var/run/docker.sock'
-docker_socket_path: '/var/run/docker.sock'
+docker_host: "unix:///var/run/docker.sock"
+docker_socket_path: "/var/run/docker.sock"
 # Locations of the installation files and Docker volumes
 # (can be at different locations)
 colander_installation_path: '/home/{{ ansible_user }}/colander'
@@ -22,10 +22,10 @@ compose_file: docker-compose.yml
 # server cannot handle the load.
 # The "flavor" can be specifie per host.
 flavor:
-  use_mandolin: '{{ stack_overrides.flavor.use_mandolin | default(True)}}'
-  use_threatr: '{{ stack_overrides.flavor.use_threatr | default(True)}}'
-  use_cyberchef: '{{ stack_overrides.flavor.use_cyberchef | default(True)}}'
-  use_playwright: '{{ stack_overrides.flavor.use_playwright | default(True)}}'
+  use_mandolin: "{{ stack_overrides.flavor.use_mandolin | default(True)}}"
+  use_threatr: "{{ stack_overrides.flavor.use_threatr | default(True)}}"
+  use_cyberchef: "{{ stack_overrides.flavor.use_cyberchef | default(True)}}"
+  use_playwright: "{{ stack_overrides.flavor.use_playwright | default(True)}}"
 
 stack:
   base:
