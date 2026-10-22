@@ -3,11 +3,13 @@
   file:
     path: "{{ item }}"
     state: directory
+    owner: "{{ ansible_user }}"
+    mode: 0700
   loop:
     - "{{ colander_installation_path }}"
     - "{{ docker_volumes_path }}"
     - "{{ docker_backup_path }}"
-    - "{{ colander_installation_path }}/.envs"
+    - "{{ colander_installation_path }}/compose"
     - "{{ colander_installation_path }}/scripts"
 
 - name: Ensures the volume directories exist
@@ -37,7 +39,8 @@
     src: "./templates/scripts/backup.j2"
     dest: "{{ colander_installation_path }}/scripts/backup"
     force: true
-    mode: 0744
+    owner: "{{ ansible_user }}"
+    mode: 0700
 
 - name: Copy restore script
   become: false
@@ -45,7 +48,8 @@
     src: "./templates/scripts/restore.j2"
     dest: "{{ colander_installation_path }}/scripts/restore"
     force: true
-    mode: 0744
+    owner: "{{ ansible_user }}"
+    mode: 0700
 
 - name: "deploy ./docker/* to {{ colander_installation_path }}/compose/"
   # ansible.posix.synchronize:
@@ -56,16 +60,20 @@
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../docker/"
     dest: "{{ colander_installation_path }}/compose/"
+    owner: "{{ ansible_user }}"
+    mode: 0600
 
 - name: Generate .env file
   become: false
   ansible.builtin.template:
     src: "./templates/dot_env_file.j2"
     dest: "{{ colander_installation_path }}/compose/.env"
+    owner: "{{ ansible_user }}"
     mode: 0600
 
 - name: "Deploy a compose-prod.yaml"
   ansible.builtin.template:
     src: "./templates/compose-prod.yaml.j2"
     dest: "{{ colander_installation_path }}/compose/compose-prod.yml"
+    owner: "{{ ansible_user }}"
     mode: 0600
