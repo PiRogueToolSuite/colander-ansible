@@ -59,4 +59,5 @@ colander_vault:
   # Minio
   minio_access_key: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
   minio_secret_key: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
-
+  minio_root_user: "{{ lookup('community.general.random_string', length=10, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
+  minio_root_password: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"

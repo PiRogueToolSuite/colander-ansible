@@ -1,10 +1,17 @@
+# This file show-cases how you can override configuration
+# see exposed variables here: group_vars/all.yml
 stack_overrides:
   flavor:
     use_threatr: True
     use_cyberchef: True
     use_mandolin: True
     use_playwright: True
+
   services:
+    # Example with elasticsearch memory tuning
     elasticsearch:
       xms: 512m
       xmx: 512m
+    # Example with colander version change to use the next release candidate
+    # colander:
+    #   version: "next"
