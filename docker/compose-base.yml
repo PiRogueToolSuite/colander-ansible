@@ -127,7 +127,7 @@ services:
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_LABEL_ENABLE=true
       - WATCHTOWER_INCLUDE_RESTARTING=true
-      # {{ stack.services.watchtower.environment | to_nice_yaml | indent(6) }}
+      - WATCHTOWER_POLL_INTERVAL=${WATCHTOWER_POLL_INTERVAL:-3600}
     labels:
       com.centurylinklabs.watchtower.enable: true
       colander.service.name: watchtower
