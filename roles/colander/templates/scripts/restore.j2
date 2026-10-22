@@ -45,7 +45,7 @@ rm -rf ${colander_db_volume_path}/*
 cp ${backup_dir}/colander-db/* ${colander_db_volume_path}/
 backup_file=$(ls -t ${backup_dir}/colander-db/*.gz | head -n1)
 backup_filename=$(basename -- "${backup_file}")
-docker compose -f "{{ colander_installation_path }}/{{ compose_file }}" run --rm colander-postgres restore ${backup_filename}
+docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" run --rm colander-postgres restore ${backup_filename}
 rm -rf ${colander_db_volume_path}/*
 
 {% if flavor.use_threatr %}
@@ -54,7 +54,7 @@ rm -rf ${threatr_db_volume_path}/*
 cp ${backup_dir}/threatr-db/* ${threatr_db_volume_path}/
 backup_file=$(ls -t ${backup_dir}/threatr-db/*.gz | head -n1)
 backup_filename=$(basename -- "${backup_file}")
-docker compose -f "{{ colander_installation_path }}/{{ compose_file }}" run --rm threatr-postgres restore ${backup_filename}
+docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" run --rm threatr-postgres restore ${backup_filename}
 rm -rf ${threatr_db_volume_path}/*
 {% endif %}
 
@@ -68,6 +68,6 @@ backup_file=$(ls -t ${backup_dir}/elasticsearch/*.tgz | head -n1)
 es_volume_path="{{ stack.services.elasticsearch.volumes.data }}/snapshots/"
 rm -rf ${es_volume_path}/*
 tar xzf ${backup_file}  ${es_volume_path}/snapshots/
-docker compose -f "{{ colander_installation_path }}/{{ compose_file }}" exec -T elasticsearch /bin/bash << EOF
+docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" exec -T elasticsearch /bin/bash << EOF
 curl -s -X POST http://localhost:9200/_snapshot/snapshots/${snapshot_name}/_restore
 EOF

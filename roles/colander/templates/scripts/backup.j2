@@ -22,13 +22,13 @@ mkdir -p ${backup_dir}/elasticsearch
 # Backup Postgres databases
 colander_db_volume_path="{{ stack.services.colander_postgres.volumes.backups }}"
 rm -rf ${colander_db_volume_path}/*
-docker compose -f "{{ colander_installation_path }}/{{ compose_file }}" run --rm colander-postgres backup
+docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" run --rm colander-postgres backup
 mv ${colander_db_volume_path}/* ${backup_dir}/colander-db
 rm -rf ${colander_db_volume_path}/*
 {% if flavor.use_threatr %}
 threatr_db_volume_path="{{ stack.services.threatr_postgres.volumes.backups }}"
 rm -rf ${threatr_db_volume_path}/*
-docker compose -f "{{ colander_installation_path }}/{{ compose_file }}" run --rm threatr-postgres backup
+docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" run --rm threatr-postgres backup
 mv ${threatr_db_volume_path}/* ${backup_dir}/threatr-db
 rm -rf ${threatr_db_volume_path}/*
 {% endif %}
@@ -46,7 +46,7 @@ echo "Minio backup '${minio_backup_name}.tgz' has been created and placed in '${
 es_backup_name="elasticsearch-$(date +'%Y_%m_%d-%H_%M_%S')"
 es_volume_path="{{ stack.services.elasticsearch.volumes.data }}"
 
-docker compose -f "{{ colander_installation_path }}/{{ compose_file }}" exec -T elasticsearch /bin/bash << EOF
+docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" exec -T elasticsearch /bin/bash << EOF
 curl -s --request DELETE 'http://localhost:9200/_snapshot/snapshots'
 rm -rf /usr/share/elasticsearch/data/snapshots/*
 curl -s -X PUT http://localhost:9200/_snapshot/snapshots -H "Content-Type: application/json" -d '
@@ -58,7 +58,7 @@ curl -s -X PUT http://localhost:9200/_snapshot/snapshots -H "Content-Type: appli
     }
  }
 '
-curl -s -X PUT 'http://localhost:9200/_snapshot/snapshots/${es_backup_name}?wait_for_completion=true' 
+curl -s -X PUT 'http://localhost:9200/_snapshot/snapshots/${es_backup_name}?wait_for_completion=true'
 EOF
 cd ${es_volume_path}/snapshots/
 tar czf ${backup_dir}/elasticsearch/${es_backup_name}.tgz *
