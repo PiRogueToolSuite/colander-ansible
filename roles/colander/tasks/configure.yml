@@ -46,16 +46,16 @@
 - name: Copy backup script
   become: false
   ansible.builtin.template:
-    src: './templates/scripts/backup.j2'
-    dest: '{{ colander_installation_path }}/scripts/backup'
+    src: "./templates/scripts/backup.j2"
+    dest: "{{ colander_installation_path }}/scripts/backup"
     force: true
     mode: 0744
 
 - name: Copy restore script
   become: false
   ansible.builtin.template:
-    src: './templates/scripts/restore.j2'
-    dest: '{{ colander_installation_path }}/scripts/restore'
+    src: "./templates/scripts/restore.j2"
+    dest: "{{ colander_installation_path }}/scripts/restore"
     force: true
     mode: 0744
 
