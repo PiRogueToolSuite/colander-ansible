@@ -3,6 +3,6 @@
   become: false
   ansible.builtin.template:
     src: ./templates/vault.yml.j2
-    dest: '../group_vars/colander/vault'
-    mode: '0644'
+    dest: "../group_vars/colander/vault"
+    mode: "0600"
     force: false
