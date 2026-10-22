@@ -158,24 +158,6 @@ services:
       # # https://docs.djangoproject.com/fr/4.2/ref/settings/#csrf-header-name
       # traefik.http.middlewares.csrf.headers.hostsProxyHeaders: "X-CSRFToken"
 
-  # ----------------------------
-  # Playwright
-  # ----------------------------
-  # This service is used when you go in Colander and use the feature Collect -> URL -> Capture
-  playwright:
-    image: "ghcr.io/piroguetoolsuite/playwright-rest-api:${PLAYWRIGHT_IMAGE_VERSION:-main}"
-    restart: always
-    logging:
-      driver: "${DOCKER_LOG_DRIVER:-json-file}"
-      options:
-        labels: colander.service.name,colander.service.type
-    networks:
-      - backend
-    labels:
-      com.centurylinklabs.watchtower.enable: true
-      colander.service.name: playwright
-      colander.service.type: backend
-
 volumes:
   # Volume for minio data
   production_minio_data:

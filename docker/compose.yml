@@ -3,6 +3,7 @@ include:
   - compose-cyberchef.yml
   - compose-threatr.yml
   - compose-mandolin.yml
+  - compose-playwright.yml
 
   # FIXME: implement:
   #   {% if flavor.use_cyberchef %} / BASE_USE_CYBERCHEF
