@@ -1,20 +1,20 @@
 - name: Start the whole stack
   community.docker.docker_compose_v2:
-    project_src: "{{ colander_installation_path }}"
+    project_src: "{{ colander_installation_path }}/compose"
+    files: ["compose-prod.yml"]
     docker_host: "{{ docker_host }}"
     state: present
 
 - name: Create Colander admin user
   community.docker.docker_compose_v2_run:
     service: "colander-worker"
-    project_src: "{{ colander_installation_path }}"
-    command: "python manage.py createsuperuser --noinput"
+    project_src: "{{ colander_installation_path }}/compose"
+    files: ["compose-prod.yml"]
+    command: "/entrypoint python manage.py createsuperuser --noinput --username {{ colander_vault.colander_admin_user }} --email {{ colander_vault.admin_email }}"
     docker_host: "{{ docker_host }}"
     remove_orphans: true
     cleanup: true
     env:
-      DJANGO_SUPERUSER_USERNAME: "{{ colander_vault.colander_admin_user }}"
-      DJANGO_SUPERUSER_EMAIL: "{{ colander_vault.admin_email }}"
       DJANGO_SUPERUSER_PASSWORD: "{{ colander_vault.colander_admin_password }}"
   register: command_result
   changed_when: command_result.rc == 0
@@ -25,14 +25,13 @@
 - name: Create Threatr admin user
   community.docker.docker_compose_v2_run:
     service: threatr-worker
-    project_src: "{{ colander_installation_path }}"
-    command: python manage.py createsuperuser --noinput
+    project_src: "{{ colander_installation_path }}/compose"
+    files: ["compose-prod.yml"]
+    command: "/entrypoint python manage.py createsuperuser --noinput --username {{ colander_vault.threatr_admin_user }} --email {{ colander_vault.admin_email }}"
     docker_host: "{{ docker_host }}"
     remove_orphans: true
     cleanup: true
     env:
-      DJANGO_SUPERUSER_USERNAME: "{{ colander_vault.threatr_admin_user }}"
-      DJANGO_SUPERUSER_EMAIL: "{{ colander_vault.admin_email }}"
       DJANGO_SUPERUSER_PASSWORD: "{{ colander_vault.threatr_admin_password }}"
   register: command_result
   changed_when: command_result.rc == 0

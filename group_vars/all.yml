@@ -8,14 +8,10 @@ docker_host: "unix:///var/run/docker.sock"
 docker_socket_path: "/var/run/docker.sock"
 # Locations of the installation files and Docker volumes
 # (can be at different locations)
-colander_installation_path: '/home/{{ ansible_user }}/colander'
-docker_volumes_path: '/home/{{ ansible_user }}/colander/volumes'
-docker_backup_path: '/home/{{ ansible_user }}/colander/backups'
-# Location of the .env files within the installation directory
-dot_env_files_dir: .envs
-# The template to be used for the generation of the Docker Compose file
-compose_file_template: no-sso.yml.j2
-compose_file: docker-compose.yml
+colander_installation_path: "/home/{{ ansible_user }}/colander"
+docker_volumes_path: "/home/{{ ansible_user }}/colander/volumes"
+docker_backup_path: "/home/{{ ansible_user }}/colander/backups"
+compose_file: compose-prod.yml
 
 # The "flavor" of the service stack. Administrators can decide to disable
 # some service either because they will not be used nor because the
@@ -29,114 +25,82 @@ flavor:
 
 stack:
   base:
-    dot_env_file: .base
-    # Environment variables that are common to Colander and Threatr
-    environment:
-      - USE_DOCKER=True
-      - COLANDER_BASE_URL={{ colander_vault.colander_base_url }}
-      - THREATR_BASE_URL={{ colander_vault.threatr_base_url }}
-      - CYBERCHEF_BASE_URL={{ colander_vault.cyberchef_base_url }}
-      - ACME_EMAIL={{ colander_vault.acme_email }}
-      - ADMIN_NAME={{ colander_vault.admin_name }}
-      - ADMIN_EMAIL={{ colander_vault.admin_email }}
-      - DJANGO_DEFAULT_FROM_EMAIL={{ colander_vault.django_default_from_email }}
-      - EMAIL_HOST={{ colander_vault.email_host }}
-      - EMAIL_HOST_USER={{ colander_vault.email_host_user }}
-      - EMAIL_HOST_PASSWORD={{ colander_vault.email_host_password }}
-      - EMAIL_PORT={{ colander_vault.email_port }}
-      - EMAIL_USE_TLS={{ colander_vault.email_use_tls }}
-      - EMAIL_USE_SSL={{ colander_vault.email_use_ssl }}
-      - LICENSE_ENABLED=True
-      - USE_MANDOLIN={{ flavor.use_mandolin }}
-      - USE_CYBERCHEF={{ flavor.use_cyberchef }}
-      - USE_THREATR={{ flavor.use_threatr }}
-      - USE_PLAYWRIGHT={{ flavor.use_playwright }}
+    vars:
+      colander_base_url: "{{ colander_vault.colander_base_url }}"
+      threatr_base_url: "{{ colander_vault.threatr_base_url }}"
+      cyberchef_base_url: "{{ colander_vault.cyberchef_base_url }}"
+      acme_email: "{{ colander_vault.acme_email }}"
+      admin_name: "{{ colander_vault.admin_name }}"
+      admin_email: "{{ colander_vault.admin_email }}"
+      django_default_from_email: "{{ colander_vault.django_default_from_email }}"
+      email_host: "{{ colander_vault.email_host }}"
+      email_host_user: "{{ colander_vault.email_host_user }}"
+      email_host_password: "{{ colander_vault.email_host_password }}"
+      email_port: "{{ colander_vault.email_port }}"
+      email_use_tls: "{{ colander_vault.email_use_tls }}"
+      email_use_ssl: "{{ colander_vault.email_use_ssl }}"
+      license_enabled: "True"
+      use_mandolin: "{{ flavor.use_mandolin }}"
+      use_cyberchef: "{{ flavor.use_cyberchef }}"
+      use_threatr: "{{ flavor.use_threatr }}"
+      use_playwright: "{{ flavor.use_playwright }}"
+
   services:
     traefik:
       # The version of Traefik to be deployed
-      version: v3.2.2
+      version: "v3.7"
       # The locations of the configuration file and the access logs
       volumes:
-        config: '{{ docker_volumes_path }}/traefik'
-        logs: '{{ docker_volumes_path }}/traefik-logs'
+        config: "{{ docker_volumes_path }}/traefik"
+        logs: "{{ docker_volumes_path }}/traefik-logs"
       vars:
-        acme_email: '{{ colander_vault.acme_email }}'
-        colander_fqdn: '{{ colander_vault.colander_fqdn }}'
-        threatr_fqdn: '{{ colander_vault.threatr_fqdn }}'
-        cyberchef_fqdn: '{{ colander_vault.cyberchef_fqdn }}'
-        traefik_fqdn: '{{ colander_vault.traefik_fqdn }}'
-        enable_dashboard: true
+        acme_email: "{{ colander_vault.acme_email }}"
+        colander_fqdn: "{{ colander_vault.colander_fqdn }}"
+        threatr_fqdn: "{{ colander_vault.threatr_fqdn }}"
+        cyberchef_fqdn: "{{ colander_vault.cyberchef_fqdn }}"
+        traefik_fqdn: "{{ colander_vault.traefik_fqdn }}"
+        enable_dashboard: "{{ stack_overrides.services.traefik.enable_dashboard | default(false)}}"
+        enable_access_log: "{{ stack_overrides.services.traefik.enable_access_log | default(false)}}"
+        log_level: "{{ stack_overrides.services.traefik.log_level | default('ERROR')}}"
     minio:
       # The version of Minio to be deployed
-      version: RELEASE.2025-09-07T16-13-09Z.hotfix.7aa24e772
-      dot_env_file: .minio
-      # The location of the files stored in the buckets
+      version: "RELEASE.2026-09-19T17-05-25Z.hotfix.4ef74f03d6f2"
       volumes:
-        data: '{{ docker_volumes_path }}/minio'
-      environment:
-        - MINIO_ACCESS_KEY={{ colander_vault.minio_access_key }}
-        - MINIO_SECRET_KEY={{ colander_vault.minio_secret_key }}
+        data: "{{ docker_volumes_path }}/minio"
     watchtower:
-      version: latest
-      environment:
-        - WATCHTOWER_POLL_INTERVAL=3600
+      version: "latest"
     colander:
       # The version of Colander to be deployed
       version: '{{ stack_overrides.services.colander.version | default("main")}}'
-      dot_env_file: .colander
-      environment:
-        - REDIS_URL=redis://redis:6379/0
-        - DJANGO_SECURE_SSL_REDIRECT=False
-        - DJANGO_ACCOUNT_ALLOW_REGISTRATION=False
-        - DJANGO_SETTINGS_MODULE=config.settings.production
-        - WEB_CONCURRENCY=4
-        - DJANGO_ALLOWED_HOSTS={{ colander_vault.colander_django_allowed_hosts }}
-        - DJANGO_SECRET_KEY={{ colander_vault.colander_django_secret_key }}
-        - DJANGO_ADMIN_URL={{ colander_vault.colander_django_admin_url }}
+      vars:
+        django_allowed_hosts: "{{ colander_vault.colander_django_allowed_hosts }}"
+        django_admin_url: "{{ colander_vault.colander_django_admin_url }}"
+        django_secret_key: "{{ colander_vault.colander_django_secret_key }}"
     colander_postgres:
+      version: "main"
       # The locations of the database and the backups
       volumes:
-        data: '{{ docker_volumes_path }}/colander-db'
-        backups: '{{ docker_volumes_path }}/colander-db-backups'
-      dot_env_file: .colander-postgres
-      # TODO : cabler ça sur les variables COLANDER_POSTGRES_*
-      environment:
-        - POSTGRES_HOST=colander-postgres
-        - POSTGRES_PORT=5432
-        - POSTGRES_DB=colander
-        - POSTGRES_USER={{ colander_vault.colander_postgres_user }}
-        - POSTGRES_PASSWORD={{ colander_vault.colander_postgres_password }}
-        # Used by pg_ready, see the healthcheck in the Docker Compose file
-        - PGDATABASE=colander
-        - PGUSER={{ colander_vault.colander_postgres_user }}
+        data: "{{ docker_volumes_path }}/colander-db"
+        backups: "{{ docker_volumes_path }}/colander-db-backups"
+      vars:
+        postgres_user: "{{ colander_vault.colander_postgres_user }}"
+        postgres_password: "{{ colander_vault.colander_postgres_password }}"
     threatr:
       # The version of Threatr to be deployed
-      version: '{{ stack_overrides.services.threatr.version | default("main")}}'
-      dot_env_file: .threatr
-      environment:
-        - REDIS_URL=redis://redis:6379/0
-        - DJANGO_SECURE_SSL_REDIRECT=false
-        - WEB_CONCURRENCY=4
-        - DJANGO_SETTINGS_MODULE=config.settings.production
-        - DJANGO_ACCOUNT_ALLOW_REGISTRATION=False
-        - DJANGO_ALLOWED_HOSTS={{ colander_vault.threatr_django_allowed_hosts }}
-        - DJANGO_SECRET_KEY={{ colander_vault.threatr_django_secret_key }}
-        - DJANGO_ADMIN_URL={{ colander_vault.threatr_django_admin_url }}
+      version: "{{ stack_overrides.services.threatr.version | default('main')}}"
+      vars:
+        django_allowed_hosts: "{{ colander_vault.threatr_django_allowed_hosts }}"
+        django_admin_url: "{{ colander_vault.threatr_django_admin_url }}"
+        django_secret_key: "{{ colander_vault.threatr_django_secret_key }}"
     threatr_postgres:
+      version: "main"
       # The locations of the database and the backups
       volumes:
-        data: '{{ docker_volumes_path }}/threatr-db'
-        backups: '{{ docker_volumes_path }}/threatr-db-backups'
-      dot_env_file: .threatr-postgres
-      environment:
-        - POSTGRES_HOST=threatr-postgres
-        - POSTGRES_PORT=5432
-        - POSTGRES_DB=threatr
-        - POSTGRES_USER={{ colander_vault.threatr_postgres_user }}
-        - POSTGRES_PASSWORD={{ colander_vault.threatr_postgres_password }}
-        # Used by pg_ready, see the healthcheck in the Docker Compose file
-        - PGDATABASE=threatr
-        - PGUSER={{ colander_vault.threatr_postgres_user }}
+        data: "{{ docker_volumes_path }}/threatr-db"
+        backups: "{{ docker_volumes_path }}/threatr-db-backups"
+      vars:
+        postgres_user: "{{ colander_vault.threatr_postgres_user }}"
+        postgres_password: "{{ colander_vault.threatr_postgres_password }}"
     mandolin:
       # The version of Mandolin to be deployed
       version: main
@@ -150,17 +114,17 @@ stack:
       # The version of Plawright to be deployed
       version: main
     elasticsearch:
-      # The locations of the indices and snapshots
-      volumes:
-        data: '{{ docker_volumes_path }}/elasticsearch'
-        snapshots: '{{ docker_volumes_path }}/elasticsearch-snapshots'
       # The version of Elasticsearch to be deployed
       version: 8.4.1
+      # The locations of the indices and snapshots
+      volumes:
+        data: "{{ docker_volumes_path }}/elasticsearch"
+        snapshots: "{{ docker_volumes_path }}/elasticsearch-snapshots"
       # The amount of memory to be allocated to ES. This can be specified
       # per host. The default value is 2GB.
       xmx: '{{ stack_overrides.services.elasticsearch.xmx | default("2048m")}}'
       xms: '{{ stack_overrides.services.elasticsearch.xms | default("2048m")}}'
     redis:
-      verison: 6
+      version: 8
       volumes:
-        data: '{{ docker_volumes_path }}/redis'
+        data: "{{ docker_volumes_path }}/redis"

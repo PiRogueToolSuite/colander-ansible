@@ -4,37 +4,25 @@
     path: "{{ item }}"
     state: directory
   loop:
-    - '{{ colander_installation_path }}'
-    - '{{ docker_volumes_path }}'
-    - '{{ docker_backup_path }}'
-    - '{{ colander_installation_path }}/.envs'
-    - '{{ colander_installation_path }}/scripts'
-    - '{{ colander_installation_path }}/compose/traefik'
-    - '{{ colander_installation_path }}/compose/postgres'
+    - "{{ colander_installation_path }}"
+    - "{{ docker_volumes_path }}"
+    - "{{ docker_backup_path }}"
+    - "{{ colander_installation_path }}/.envs"
+    - "{{ colander_installation_path }}/scripts"
 
 - name: Ensures the volume directories exist
   file:
     path: "{{ item }}"
     state: directory
   loop:
-    - '{{ stack.services.traefik.volumes.config }}'
-    - '{{ stack.services.traefik.volumes.logs }}'
-    - '{{ stack.services.minio.volumes.data }}'
-    - '{{ stack.services.colander_postgres.volumes.data }}'
-    - '{{ stack.services.colander_postgres.volumes.backups }}'
-    - '{{ stack.services.threatr_postgres.volumes.data }}'
-    - '{{ stack.services.threatr_postgres.volumes.backups }}'
-    - '{{ stack.services.elasticsearch.volumes.data }}'
-
-# TODO : faudra voir ce qu'on fait des tâches commentées ci-dessous ou non (notamment les scripts)
-# - name: Generate Docker Compose file
-#   become: false
-#   ansible.builtin.template:
-#     src: './templates/{{ compose_file_template }}'
-#     dest: '{{ colander_installation_path }}/{{ compose_file }}'
-#     mode: '0644'
-#     force: true
-#   register: configuration
+    - "{{ stack.services.traefik.volumes.config }}"
+    - "{{ stack.services.traefik.volumes.logs }}"
+    - "{{ stack.services.minio.volumes.data }}"
+    - "{{ stack.services.colander_postgres.volumes.data }}"
+    - "{{ stack.services.colander_postgres.volumes.backups }}"
+    - "{{ stack.services.threatr_postgres.volumes.data }}"
+    - "{{ stack.services.threatr_postgres.volumes.backups }}"
+    - "{{ stack.services.elasticsearch.volumes.data }}"
 
 # - name: Copy Postgres scripts
 #   become: false
@@ -59,40 +47,25 @@
     force: true
     mode: 0744
 
-# TODO: faudra probablement refaire ça en utilisant le .env à présent
-# - name: Generate services configuration
-#   become: false
-#   ansible.builtin.template:
-#     src: '{{ item.src }}'
-#     dest: '{{ item.dest }}'
-#     mode: '0644'
-#     force: true
-#   loop:
-#     # - {
-#     #   src: './templates/traefik/Dockerfile.j2',
-#     #   dest: '{{ colander_installation_path }}/compose/traefik/Dockerfile'
-#     # }
-#     # - {
-#     #   src: './templates/traefik/traefik.yml.j2',
-#     #   dest: '{{ colander_installation_path }}/compose/traefik/traefik.yml'
-#     # }
-#     # - {
-#     #   src: './templates/postgres/Dockerfile.j2',
-#     #   dest: '{{ colander_installation_path }}/compose/postgres/Dockerfile'
-#     # }
+- name: "deploy ./docker/* to {{ colander_installation_path }}/compose/"
+  # ansible.posix.synchronize:
+  #   src: "{{ playbook_dir }}/../docker/"
+  #   dest: "{{ colander_installation_path }}/compose/"
+  #   delete: true
+  #   use_ssh_args: true
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../docker/"
+    dest: "{{ colander_installation_path }}/compose/"
 
-- name: Generate .env files
+- name: Generate .env file
   become: false
   ansible.builtin.template:
-    src: './templates/dot_env_file.j2'
-    dest: '{{ colander_installation_path }}/{{ dot_env_files_dir }}/{{ item.dot_env_file }}'
-    mode: '0644'
-    force: true
-  with_items:
-    - '{{ stack.base }}'
-    - '{{ stack.services.minio }}'
-    - '{{ stack.services.colander }}'
-    - '{{ stack.services.colander_postgres }}'
-    - '{{ stack.services.threatr }}'
-    - '{{ stack.services.threatr_postgres }}'
+    src: "./templates/dot_env_file.j2"
+    dest: "{{ colander_installation_path }}/compose/.env"
+    mode: 0600
 
+- name: "Deploy a compose-prod.yaml"
+  ansible.builtin.template:
+    src: "./templates/compose-prod.yaml.j2"
+    dest: "{{ colander_installation_path }}/compose/compose-prod.yml"
+    mode: 0600
