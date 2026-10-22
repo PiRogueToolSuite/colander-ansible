@@ -15,11 +15,11 @@ services:
         SELF_SIGNED_PATH=/etc/traefik/certs/self-signed
         CERT_PATH=$$SELF_SIGNED_PATH/cert.pem
         KEY_PATH=$$SELF_SIGNED_PATH/key.pem
-        if [ ! -f "$$CERT_PATH" ] || [ ! -f "$$KEY_PATH" ]; then
+        # if [ ! -f "$$CERT_PATH" ] || [ ! -f "$$KEY_PATH" ]; then
           apk add openssl
           mkdir -p "$$SELF_SIGNED_PATH"
-          openssl req -new -x509 -subj "/C=FR/L=Paris/O=PTS-dev/CN=$COLANDER_FQDN" -addext "subjectAltName=DNS:$COLANDER_FQDN,DNS:$THREATR_FQDN,DNS:$CYBERCHEF_FQDN" -newkey rsa:2048 -keyout "$$KEY_PATH" -out "$$CERT_PATH" -days 365 -nodes
-        fi
+          openssl req -new -x509 -subj "/C=FR/L=Paris/O=PTS-dev/CN=$COLANDER_FQDN" -addext "subjectAltName=DNS:$COLANDER_FQDN,DNS:$THREATR_FQDN,DNS:$CYBERCHEF_FQDN" -newkey rsa:4096 -keyout "$$KEY_PATH" -out "$$CERT_PATH" -days 365 -nodes
+        # fi
       "
     environment:
       COLANDER_FQDN: "${COLANDER_FQDN:-colander.local}"
