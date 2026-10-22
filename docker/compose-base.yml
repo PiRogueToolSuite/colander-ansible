@@ -32,6 +32,7 @@ services:
     command:
       # following args are common to the ones defined in compose-dev.yml
       - "--log.level=${TRAEFIK_LOG_LEVEL:-ERROR}"
+      - "--accesslog=${TRAEFIK_ACCESSLOG_ENABLED:-true}"
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.network=frontend"
       - "--entrypoints.web.address=:80"
