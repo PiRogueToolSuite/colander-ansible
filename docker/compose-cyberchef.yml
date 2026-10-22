@@ -16,7 +16,6 @@ services:
     ports:
       - 127.0.0.1:5003:8000
     labels:
-      com.centurylinklabs.watchtower.enable: false
       colander.service.name: cyberchef
       colander.service.type: web
       traefik.enable: "true"

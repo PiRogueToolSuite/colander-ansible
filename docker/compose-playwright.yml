@@ -13,6 +13,5 @@ services:
     networks:
       - backend
     labels:
-      com.centurylinklabs.watchtower.enable: true
       colander.service.name: playwright
       colander.service.type: backend
