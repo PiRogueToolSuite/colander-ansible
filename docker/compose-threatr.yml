@@ -128,7 +128,7 @@ services:
       traefik.http.routers.threatr.middlewares: "compress-http,csrf"
       traefik.http.routers.threatr.tls.certResolver: "letsencrypt"
       # https://github.com/traefik/traefik/issues/1156#issuecomment-287387666
-      traefik.docker.network: "docker_frontend"
+      traefik.docker.network: "${COMPOSE_PROJECT_NAME}_frontend"
 
 volumes:
   # Volume for threatr-postges data

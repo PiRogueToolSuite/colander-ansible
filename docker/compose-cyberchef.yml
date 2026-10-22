@@ -28,4 +28,4 @@ services:
       traefik.http.routers.cyberchef.entrypoints: "websecure"
       traefik.http.routers.cyberchef.middlewares: "compress-http,csrf"
       traefik.http.routers.cyberchef.tls.certResolver: "letsencrypt"
-      traefik.docker.network: "frontend"
+      traefik.docker.network: "${COMPOSE_PROJECT_NAME}_frontend"

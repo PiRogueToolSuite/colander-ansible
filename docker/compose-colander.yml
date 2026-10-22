@@ -153,7 +153,7 @@ services:
       traefik.http.routers.colander.middlewares: "compress-http,csrf"
       traefik.http.routers.colander.tls.certResolver: "letsencrypt"
       # https://github.com/traefik/traefik/issues/1156#issuecomment-287387666
-      traefik.docker.network: "docker_frontend"
+      traefik.docker.network: "${COMPOSE_PROJECT_NAME}_frontend"
       # # https://doc.traefik.io/traefik/middlewares/http/compress/
       # traefik.http.middlewares.compress-http.compress: true
       # # https://docs.traefik.io/master/middlewares/headers/#hostsproxyheaders
