@@ -90,7 +90,6 @@ services:
       # FIXME: {{ stack.base.dot_env_file}}, {{ stack.services.threatr.dot_env_file}}, {{ stack.services.threatr_postgres.dot_env_file}}
       <<: [*base_env, *threatr_env, *threater_postgres_env]
     labels:
-      com.centurylinklabs.watchtower.enable: true
       colander.service.name: threatr-worker
       colander.service.type: worker
 

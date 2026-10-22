@@ -25,7 +25,7 @@ MINIO_ROOT_PASSWORD="{{ colander_vault.minio_root_password }}"
 # ------------------------------------------------------------------------------------------------------------------------
 # Docker settings
 
-# Path to the docker socket (used by watchtower and traefik)
+# Path to the docker socket (used by traefik)
 DOCKER_SOCKET_PATH="{{ docker_socket_path }}"
 
 # How to handle logs of docker container
@@ -40,11 +40,6 @@ DOCKER_SOCKET_PATH="{{ docker_socket_path }}"
 # Version of the OCI image for traefik service
 # https://hub.docker.com/_/traefik/tags
 TRAEFIK_IMAGE_VERSION="{{ stack.services.traefik.version }}"
-
-# Version of the OCI image for watchtower service
-# https://github.com/nicholas-fedor/watchtower
-# https://hub.docker.com/r/nickfedor/watchtower/tags
-WATCHTOWER_IMAGE_VERSION="{{ stack.services.watchtower.version }}"
 
 # Version of the OCI image for elasticsearch service
 # https://hub.docker.com/_/elasticsearch/tags
@@ -301,7 +296,5 @@ BASE_EMAIL_HOST_USER="{{ stack.base.vars.email_host_user }}"
 BASE_EMAIL_HOST_PASSWORD="{{ stack.base.vars.email_host_password }}"
 
 BASE_LICENSE_ENABLED="{{ stack.base.vars.license_enabled }}"
-
-# WATCHTOWER_POLL_INTERVAL=3600
 
 # BASE_LICENSE_ENABLED=True

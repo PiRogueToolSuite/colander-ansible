@@ -67,8 +67,6 @@ stack:
       version: "RELEASE.2026-09-19T17-05-25Z.hotfix.4ef74f03d6f2"
       volumes:
         data: "{{ docker_volumes_path }}/minio"
-    watchtower:
-      version: "latest"
     colander:
       # The version of Colander to be deployed
       version: '{{ stack_overrides.services.colander.version | default("main")}}'

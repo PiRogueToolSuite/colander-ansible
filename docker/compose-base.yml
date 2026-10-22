@@ -111,27 +111,6 @@ services:
       colander.service.name: redis
       colander.service.type: database
 
-  watchtower:
-    image: "nickfedor/watchtower:${WATCHTOWER_IMAGE_VERSION:-latest}"
-    restart: always
-    logging:
-      driver: "${DOCKER_LOG_DRIVER:-json-file}"
-      options:
-        labels: colander.service.name,colander.service.type
-    networks:
-      - backend
-    volumes:
-      - "/etc/timezone:/etc/timezone:ro"
-      - "${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro"
-    environment:
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_LABEL_ENABLE=true
-      - WATCHTOWER_INCLUDE_RESTARTING=true
-      - WATCHTOWER_POLL_INTERVAL=${WATCHTOWER_POLL_INTERVAL:-3600}
-    labels:
-      com.centurylinklabs.watchtower.enable: true
-      colander.service.name: watchtower
-      colander.service.type: docker
 
 volumes:
   # Volume for traefik's acme configuration files
