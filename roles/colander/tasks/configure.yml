@@ -70,6 +70,7 @@
     dest: "{{ colander_installation_path }}/compose/.env"
     owner: "{{ ansible_user }}"
     mode: 0600
+  no_log: true
 
 - name: "Deploy a compose-prod.yaml"
   ansible.builtin.template:
