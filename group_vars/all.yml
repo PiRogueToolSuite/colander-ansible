@@ -48,7 +48,7 @@ stack:
   services:
     traefik:
       # The version of Traefik to be deployed
-      version: "v3.7"
+      version: "{{ stack_overrides.services.traefik.version | default('v3.7@sha256:c8a121e4bb1347e8fd52657fab12f2cb70b68f8a018895e2068f92c9e519b9c2') }}"
       # The locations of the configuration file and the access logs
       volumes:
         config: "{{ docker_volumes_path }}/traefik"
@@ -64,18 +64,18 @@ stack:
         log_level: "{{ stack_overrides.services.traefik.log_level | default('ERROR')}}"
     minio:
       # The version of Minio to be deployed
-      version: "RELEASE.2026-09-19T17-05-25Z.hotfix.4ef74f03d6f2"
+      version: "{{ stack_overrides.services.minio.version | default('RELEASE.2026-09-19T17-05-25Z.hotfix.4ef74f03d6f2@sha256:e3a4c89118a0d02cbef43978172bd2bf4f43b6ba91d3d96618346cdb68bd73e8') }}"
       volumes:
         data: "{{ docker_volumes_path }}/minio"
     colander:
       # The version of Colander to be deployed
-      version: '{{ stack_overrides.services.colander.version | default("main")}}'
+      version: "{{ stack_overrides.services.colander.version | default('main@sha256:68fb924481712fb1ab7a24ca919cd48d941835a90d89aa34f64c8bbfb7eec42a') }}"
       vars:
         django_allowed_hosts: "{{ colander_vault.colander_django_allowed_hosts }}"
         django_admin_url: "{{ colander_vault.colander_django_admin_url }}"
         django_secret_key: "{{ colander_vault.colander_django_secret_key }}"
     colander_postgres:
-      version: "main"
+      version: "{{ stack_overrides.services.colander_postgres.version | default('main@sha256:9b99eca028e9086de7e3339c7fac50b40393b285d3f72e50eccb5ac2bc6a6d9d') }}"
       # The locations of the database and the backups
       volumes:
         data: "{{ docker_volumes_path }}/colander-db"
@@ -85,13 +85,13 @@ stack:
         postgres_password: "{{ colander_vault.colander_postgres_password }}"
     threatr:
       # The version of Threatr to be deployed
-      version: "{{ stack_overrides.services.threatr.version | default('main')}}"
+      version: "{{ stack_overrides.services.threatr.version | default('main@sha256:9dee223326f6293eb02226a33600c0d3a31494ccca4d88dc062ae4fc4a5a5a23')}}"
       vars:
         django_allowed_hosts: "{{ colander_vault.threatr_django_allowed_hosts }}"
         django_admin_url: "{{ colander_vault.threatr_django_admin_url }}"
         django_secret_key: "{{ colander_vault.threatr_django_secret_key }}"
     threatr_postgres:
-      version: "main"
+      version: "{{ stack_overrides.services.threatr_postgres.version | default('main@sha256:9b99eca028e9086de7e3339c7fac50b40393b285d3f72e50eccb5ac2bc6a6d9d') }}"
       # The locations of the database and the backups
       volumes:
         data: "{{ docker_volumes_path }}/threatr-db"
@@ -101,19 +101,19 @@ stack:
         postgres_password: "{{ colander_vault.threatr_postgres_password }}"
     mandolin:
       # The version of Mandolin to be deployed
-      version: main
+      version: "{{ stack_overrides.services.mandolin.version | default('main@sha256:efdc6457b449ecd4dc2c2853adf57157be979c68d83b7996554d8e05c2643268') }}"
     tika:
       # The version of Apache Tika to be deployed
-      version: 3.0.0.0-full
+      version: "{{ stack_overrides.services.tika.version | default('3.0.0.0-full@sha256:82698af9bacf3dbd80ba7a18cc69d06596af107169fddcb8a067f6bb1bd10426') }}"
     cyberchef:
       # The version of Cyberchef to be deployed
-      version: v11.4.0
+      version: "{{ stack_overrides.services.cyberchef.version | default('v11.4.0@sha256:a004ba65ac2cb4d7bfcea65a85d19208dae643b661ea9bfd21247073b61f2c93') }}"
     playwright:
       # The version of Plawright to be deployed
-      version: main
+      version: "{{ stack_overrides.services.playwright.version | default('main@sha256:ce21ccf0adefcdba966c1d290218b1f0b80dfd943b3f5adbe4fa9c9f11c60f64') }}"
     elasticsearch:
       # The version of Elasticsearch to be deployed
-      version: 8.4.1
+      version: "{{ stack_overrides.services.elasticsearch.version | default('8.4.1@sha256:7dd81b0af4aa916cf58373d5befaad56f89b96dd5582ced9f63879ed2650802c') }}"
       # The locations of the indices and snapshots
       volumes:
         data: "{{ docker_volumes_path }}/elasticsearch"
@@ -123,6 +123,6 @@ stack:
       xmx: '{{ stack_overrides.services.elasticsearch.xmx | default("2048m")}}'
       xms: '{{ stack_overrides.services.elasticsearch.xms | default("2048m")}}'
     redis:
-      version: 8
+      version: "{{ stack_overrides.services.redis.version | default('8@sha256:97ec88159e6d7cfb5ddef9015386087d58a912de80112f06ebdfa78fa5989901') }}"
       volumes:
         data: "{{ docker_volumes_path }}/redis"

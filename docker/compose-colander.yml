@@ -93,7 +93,7 @@ services:
 
   # Colander Workers
   colander-worker:
-    image: "ghcr.io/piroguetoolsuite/colander:${COLANDER_IMAGE_VERSION:-main}"
+    image: "ghcr.io/piroguetoolsuite/colander:${COLANDER_IMAGE_VERSION:-main@sha256:68fb924481712fb1ab7a24ca919cd48d941835a90d89aa34f64c8bbfb7eec42a}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
