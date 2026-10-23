@@ -46,7 +46,7 @@ services:
   # Database
   threatr-postgres:
     # https://github.com/PiRogueToolSuite/postgres/pkgs/container/postgres/versions
-    image: "ghcr.io/piroguetoolsuite/postgres:${THREATR_POSTGRES_IMAGE_VERSION:-main}"
+    image: "ghcr.io/piroguetoolsuite/postgres:${THREATR_POSTGRES_IMAGE_VERSION:-main@sha256:9b99eca028e9086de7e3339c7fac50b40393b285d3f72e50eccb5ac2bc6a6d9d}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
@@ -70,7 +70,7 @@ services:
 
   # Workers
   threatr-worker:
-    image: "ghcr.io/piroguetoolsuite/threatr:${THREATR_IMAGE_VERSION:-main}"
+    image: "ghcr.io/piroguetoolsuite/threatr:${THREATR_IMAGE_VERSION:-main@sha256:9dee223326f6293eb02226a33600c0d3a31494ccca4d88dc062ae4fc4a5a5a23}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"

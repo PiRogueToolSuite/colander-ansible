@@ -6,7 +6,7 @@ services:
   # Mandolin
   # ----------------------------
   tika:
-    image: "apache/tika:${TIKA_IMAGE_VERSION:-3.0.0.0-full}"
+    image: "docker.io/apache/tika:${TIKA_IMAGE_VERSION:-3.0.0.0-full@sha256:82698af9bacf3dbd80ba7a18cc69d06596af107169fddcb8a067f6bb1bd10426}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
@@ -29,8 +29,7 @@ services:
   clamav:
     mem_reservation: 262144000
     mem_limit: 1048576000
-    # TODO fixer la version de CLAMAV
-    image: ajilaag/clamav-rest
+    image: "docker.io/ajilaag/clamav-rest:${CLAMAV_IMAGE_VERSION:-0.6.5@sha256:ad689c7b75b1b299e5a3aa756db4825e7a7b4aebfb616f4271555e470587b2a8}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
@@ -55,7 +54,7 @@ services:
   # Mandolin
   # ----------------------------
   mandolin:
-    image: "ghcr.io/piroguetoolsuite/mandolin:${MANDOLIN_IMAGE_VERSION:-main}"
+    image: "ghcr.io/piroguetoolsuite/mandolin:${MANDOLIN_IMAGE_VERSION:-main@sha256:efdc6457b449ecd4dc2c2853adf57157be979c68d83b7996554d8e05c2643268}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"

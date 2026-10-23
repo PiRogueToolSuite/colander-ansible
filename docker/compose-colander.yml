@@ -39,7 +39,7 @@ services:
   # Minio
   # ----------------------------
   minio:
-    image: "quay.io/minio/aistor/minio:${MINIO_IMAGE_VERSION:-RELEASE.2026-09-19T17-05-25Z.hotfix.4ef74f03d6f2}"
+    image: "quay.io/minio/aistor/minio:${MINIO_IMAGE_VERSION:-RELEASE.2026-09-19T17-05-25Z.hotfix.4ef74f03d6f2@sha256:e3a4c89118a0d02cbef43978172bd2bf4f43b6ba91d3d96618346cdb68bd73e8}"
     command: server /data
     restart: always
     logging:
@@ -69,7 +69,7 @@ services:
   # Database
   colander-postgres:
     # https://github.com/PiRogueToolSuite/postgres/pkgs/container/postgres/versions
-    image: "ghcr.io/piroguetoolsuite/postgres:${COLANDER_POSTGRES_IMAGE_VERSION:-main}"
+    image: "ghcr.io/piroguetoolsuite/postgres:${COLANDER_POSTGRES_IMAGE_VERSION:-main@sha256:9b99eca028e9086de7e3339c7fac50b40393b285d3f72e50eccb5ac2bc6a6d9d}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
