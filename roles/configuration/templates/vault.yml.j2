@@ -56,8 +56,7 @@ colander_vault:
   threatr_admin_user: "admin"
   threatr_admin_password: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
 
-  # Minio
+  # RustFS
+  # FIXME we should rename this rustfs_ ; but we should handle previous existing vaults in the same time
   minio_access_key: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
   minio_secret_key: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
-  minio_root_user: "{{ lookup('community.general.random_string', length=10, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"
-  minio_root_password: "{{ lookup('community.general.random_string', length=60, min_lower=4, min_upper=4, min_numeric=4, special=false) }}"

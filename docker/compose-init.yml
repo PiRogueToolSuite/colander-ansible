@@ -13,10 +13,8 @@ services:
       COLANDER_IMAGE_VERSION=next
       COLANDER_DJANGO_SECRET_KEY=$(pwgen 40)
       THREATR_DJANGO_SECRET_KEY=$(pwgen 40)
-      MINIO_ACCESS_KEY=$(pwgen 40)
-      MINIO_SECRET_KEY=$(pwgen 40)
-      MINIO_ROOT_USER=$(pwgen 10)
-      MINIO_ROOT_PASSWORD=$(pwgen 40)
+      RUSTFS_ACCESS_KEY=$(pwgen 40)
+      RUSTFS_SECRET_KEY=$(pwgen 40)
       EOF
       chmod 0600 /src/.env
       "

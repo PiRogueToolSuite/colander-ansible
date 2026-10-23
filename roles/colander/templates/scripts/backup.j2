@@ -8,7 +8,7 @@ set -o nounset
 # - colander database: {{ stack.services.colander_postgres.volumes.backups }}
 # - threatr database: {{ stack.services.threatr_postgres.volumes.backups }}
 # - elasticsearch: {{ stack.services.elasticsearch.volumes.data }}/backups
-# - minio: {{ stack.services.minio.volumes.data }}/backups
+# - rustfs: {{ stack.services.rustfs.volumes.data }}/backups
 
 backup_storage_path="{{ docker_backup_path }}"
 backup_dir="${backup_storage_path}/$(date +'%Y_%m_%d-%H_%M_%S')"
@@ -16,7 +16,7 @@ backup_dir="${backup_storage_path}/$(date +'%Y_%m_%d-%H_%M_%S')"
 # Create the backup storage structure
 mkdir -p ${backup_dir}/colander-db
 mkdir -p ${backup_dir}/threatr-db
-mkdir -p ${backup_dir}/minio
+mkdir -p ${backup_dir}/rustfs
 mkdir -p ${backup_dir}/elasticsearch
 
 # Backup Postgres databases
@@ -33,14 +33,14 @@ mv ${threatr_db_volume_path}/* ${backup_dir}/threatr-db
 rm -rf ${threatr_db_volume_path}/*
 {% endif %}
 
-# Backup Minio
-minio_backup_name="minio-$(date +'%Y_%m_%d-%H_%M_%S')"
-minio_volume_path="{{ stack.services.minio.volumes.data }}"
+# Backup Rustfs
+rustfs_backup_name="rustfs-$(date +'%Y_%m_%d-%H_%M_%S')"
+rustfs_volume_path="{{ stack.services.rustfs.volumes.data }}"
 
-cd ${minio_volume_path}
-tar czf ${backup_dir}/minio/${minio_backup_name}.tgz local-media/
+cd ${rustfs_volume_path}
+tar czf ${backup_dir}/rustfs/${rustfs_backup_name}.tgz local-media/
 cd -
-echo "Minio backup '${minio_backup_name}.tgz' has been created and placed in '${backup_dir}/minio'."
+echo "RustFS backup '${rustfs_backup_name}.tgz' has been created and placed in '${backup_dir}/rustfs'."
 
 # Create ElasticSearch snapshot
 es_backup_name="elasticsearch-$(date +'%Y_%m_%d-%H_%M_%S')"

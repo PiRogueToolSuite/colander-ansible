@@ -29,8 +29,8 @@ if [ -z "$( ls -A '${backup_dir}/threatr-db' )" ]; then
 fi
 {% endif %}
 
-if [ -z "$( ls -A '${backup_dir}/minio' )" ]; then
-    echo -e "\e[31mERROR\e[0m No backup found for minio."
+if [ -z "$( ls -A '${backup_dir}/rustfs' )" ]; then
+    echo -e "\e[31mERROR\e[0m No backup found for rustfs."
     exit 1
 fi
 
@@ -58,9 +58,9 @@ docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" 
 rm -rf ${threatr_db_volume_path}/*
 {% endif %}
 
-# Restore Minio
-backup_file=$(ls -t ${backup_dir}/minio/*.tgz | head -n1)
-tar xzf ${backup_file}  "{{ stack.services.minio.volumes.data }}/"
+# Restore RustFS
+backup_file=$(ls -t ${backup_dir}/rustfs/*.tgz | head -n1)
+tar xzf ${backup_file}  "{{ stack.services.rustfs.volumes.data }}/"
 
 # Restore Elasticsearch
 snapshot_name=$(jq '.snapshots[0].name' ${backup_dir}/elasticsearch/index-0)

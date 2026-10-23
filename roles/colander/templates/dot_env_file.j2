@@ -16,11 +16,12 @@ THREATR_DJANGO_SECRET_KEY="{{ stack.services.threatr.vars.django_secret_key }}"
 # docker run --rm -it --entrypoint='' ghcr.io/piroguetoolsuite/colander:main python -c 'from django.core.management.utils import get_random_secret_key ; print(get_random_secret_key())'
 COLANDER_DJANGO_SECRET_KEY="{{ stack.services.colander.vars.django_secret_key }}"
 
-MINIO_ACCESS_KEY="{{ colander_vault.minio_access_key }}"
-MINIO_SECRET_KEY="{{ colander_vault.minio_secret_key }}"
+# Rustfs access key
+RUSTFS_ACCESS_KEY="{{ stack.services.rustfs.vars.access_key }}"
 
-MINIO_ROOT_USER="{{ colander_vault.minio_root_user }}"
-MINIO_ROOT_PASSWORD="{{ colander_vault.minio_root_password }}"
+# Rustfs secret key
+RUSTFS_SECRET_KEY="{{ stack.services.rustfs.vars.secret_key }}"
+
 
 # ------------------------------------------------------------------------------------------------------------------------
 # Docker settings
@@ -68,9 +69,9 @@ COLANDER_IMAGE_VERSION="{{ stack.services.colander.version }}"
 # https://github.com/PiRogueToolSuite/postgres/pkgs/container/postgres/versions
 COLANDER_POSTGRES_IMAGE_VERSION="{{ stack.services.colander_postgres.version }}"
 
-# Version of the OCI image for minio service
-# https://quay.io/repository/minio/minio?tab=tags&tag=latest
-MINIO_IMAGE_VERSION="{{ stack.services.minio.version }}"
+# Version of the OCI image for rustfs service
+# https://hub.docker.com/r/rustfs/rustfs/tags
+# RUSTFS_IMAGE_VERSION="{{ stack.services.rustfs.version }}"
 
 # Version of the OCI image for cyberchef service
 # https://hub.docker.com/r/mpepping/cyberchef/tags
@@ -137,8 +138,8 @@ TRAEFIK_LOGS_VOLUME_PATH="{{ stack.services.traefik.volumes.logs }}"
 # https://hub.docker.com/_/redis#start-with-persistent-storage
 REDIS_VOLUME_PATH="{{ stack.services.redis.volumes.data }}"
 
-# Volume or path to use to store data of minio service
-MINIO_VOLUME_PATH="{{ stack.services.minio.volumes.data }}"
+# Volume or path to use to store data of rustfs service
+RUSTFS_VOLUME_PATH="{{ stack.services.rustfs.volumes.data }}"
 
 # Volume or path to use to store data from elasticsearch service
 ELASTICSEARCH_VOLUME_PATH="{{ stack.services.elasticsearch.volumes.data }}"
