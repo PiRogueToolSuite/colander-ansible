@@ -6,7 +6,7 @@ services:
   # this certificate allows the connection of pirogue tools with colander using an HTTPS connection
   # while not requiring you to have a certificate obtained from a public certificate authority.
   dev-init-container:
-    image: alpine:latest
+    image: "docker.io/library/alpine:${ALPINE_IMAGE_VERSION:-3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a}"
     init: true
     volumes:
       - ./data/traefik/certs/:/etc/traefik/certs

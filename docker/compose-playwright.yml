@@ -4,7 +4,7 @@ services:
   # ----------------------------
   # This service is used when you go in Colander and use the feature Collect -> URL -> Capture
   playwright:
-    image: "ghcr.io/piroguetoolsuite/playwright-rest-api:${PLAYWRIGHT_IMAGE_VERSION:-main}"
+    image: "ghcr.io/piroguetoolsuite/playwright-rest-api:${PLAYWRIGHT_IMAGE_VERSION:-main@sha256:ce21ccf0adefcdba966c1d290218b1f0b80dfd943b3f5adbe4fa9c9f11c60f64}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
