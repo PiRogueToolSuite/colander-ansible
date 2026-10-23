@@ -126,3 +126,5 @@ stack:
       version: "{{ stack_overrides.services.redis.version | default('8@sha256:97ec88159e6d7cfb5ddef9015386087d58a912de80112f06ebdfa78fa5989901') }}"
       volumes:
         data: "{{ docker_volumes_path }}/redis"
+    clamav:
+      version: "{{ stack_overrides.services.clamav.version | default('0.6.5@sha256:ad689c7b75b1b299e5a3aa756db4825e7a7b4aebfb616f4271555e470587b2a8') }}"
