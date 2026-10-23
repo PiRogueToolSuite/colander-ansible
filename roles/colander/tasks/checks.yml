@@ -6,7 +6,7 @@
       - docker_rootless == true
     fail_msg: "The configuration of Docker is inconsistent"
 
-- name: Check an A DNS record exists for Colander
+- name: "Check an A DNS record exists for Colander ({{ colander_vault.colander_fqdn }})"
   ansible.builtin.assert:
     that:
       - dig != ""
@@ -16,7 +16,7 @@
   vars:
     dig: "{{ lookup('community.general.dig', colander_vault.colander_fqdn ~ '/A', fail_on_error=true) }}"
 
-- name: Check an A DNS record exists for Threatr
+- name: "Check an A DNS record exists for Threatr ({{ colander_vault.threatr_fqdn }})"
   ansible.builtin.assert:
     that:
       - dig != ""
@@ -27,7 +27,7 @@
     dig: "{{ lookup('community.general.dig', colander_vault.threatr_fqdn ~ '/A', fail_on_error=true) }}"
   when: flavor.use_threatr
 
-- name: Check an A DNS record exists for Cyberchef
+- name: "Check an A DNS record exists for Cyberchef ({{ colander_vault.cyberchef_fqdn }})"
   ansible.builtin.assert:
     that:
       - dig != ""
@@ -38,7 +38,7 @@
     dig: "{{ lookup('community.general.dig', colander_vault.cyberchef_fqdn ~ '/A', fail_on_error=true) }}"
   when: flavor.use_cyberchef
 
-- name: Check an A DNS record exists for Traefik dashboard
+- name: "Check an A DNS record exists for Traefik dashboard ({{ colander_vault.traefik_fqdn }})"
   ansible.builtin.assert:
     that:
       - dig != ""
