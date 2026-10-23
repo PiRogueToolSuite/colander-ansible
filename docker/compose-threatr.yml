@@ -1,6 +1,5 @@
 include:
   - compose-base.yml
-  - compose-volumes.yml
 
 x-base_env: &base_env
   USE_DOCKER: True
