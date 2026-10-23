@@ -37,6 +37,10 @@ DOCKER_SOCKET_PATH="{{ docker_socket_path }}"
 # ------------------------------------------------------------------------------------------------------------------------
 # IMAGE VERSIONS
 
+# Version of the OCI image for utilitary containers (eg. init-env, dev-init-container)
+# https://hub.docker.com/_/alpine/tags
+# ALPINE_IMAGE_VERSION=3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
+
 # Version of the OCI image for traefik service
 # https://hub.docker.com/_/traefik/tags
 TRAEFIK_IMAGE_VERSION="{{ stack.services.traefik.version }}"
@@ -87,6 +91,10 @@ THREATR_POSTGRES_IMAGE_VERSION="{{ stack.services.threatr_postgres.version }}"
 # Version of the OCI image for mandolin service
 # https://github.com/piroguetoolsuite/mandolin/pkgs/container/mandolin/versions?filters%5Bversion_type%5D=tagged
 MANDOLIN_IMAGE_VERSION="{{ stack.services.mandolin.version }}"
+
+# Version of the OCI image for clamav service
+# https://hub.docker.com/r/ajilaag/clamav-rest/tags
+CLAMAV_IMAGE_VERSION="{{ stack.services.clamav.version }}"
 
 # ------------------------------------------------------------------------------------------------------------------------
 # FQDNs / base URLs
