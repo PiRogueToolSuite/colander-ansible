@@ -4,6 +4,8 @@
     files: ["compose-prod.yml"]
     docker_host: "{{ docker_host }}"
     state: present
+    remove_orphans: true
+    pull: "always"
 
 - name: Create Colander admin user
   community.docker.docker_compose_v2_run:

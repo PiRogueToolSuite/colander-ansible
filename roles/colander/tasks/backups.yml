@@ -1,7 +1,7 @@
 - name: Find existing backups
   ansible.builtin.find:
     paths: '{{ docker_backup_path }}'
-    recurse: no
+    recurse: false
     file_type: directory
   register: found_backups
 
