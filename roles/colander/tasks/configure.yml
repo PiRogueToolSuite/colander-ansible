@@ -19,7 +19,7 @@
   loop:
     - "{{ stack.services.traefik.volumes.config }}"
     - "{{ stack.services.traefik.volumes.logs }}"
-    - "{{ stack.services.minio.volumes.data }}"
+    - "{{ stack.services.rustfs.volumes.data }}"
     - "{{ stack.services.colander_postgres.volumes.data }}"
     - "{{ stack.services.colander_postgres.volumes.backups }}"
     - "{{ stack.services.threatr_postgres.volumes.data }}"
