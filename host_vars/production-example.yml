@@ -15,3 +15,7 @@ stack_overrides:
     # Example with colander version change to use the next release candidate
     # colander:
     #   version: "next"
+    # traefik:
+    #   log_level: "TRACE"
+    #   enable_dashboard: true
+    #   enable_access_log: true
