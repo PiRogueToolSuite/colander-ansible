@@ -1,13 +1,12 @@
 include:
   - compose-networks.yml
-  - compose-volumes.yml
 
 services:
   # ----------------------------
   # Load balancers - Reverse proxy
   # ----------------------------
   traefik:
-    image: traefik:${TRAEFIK_IMAGE_VERSION:-v3.7}
+    image: docker.io/library/traefik:${TRAEFIK_IMAGE_VERSION:-v3.7@sha256:c8a121e4bb1347e8fd52657fab12f2cb70b68f8a018895e2068f92c9e519b9c2}
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
@@ -55,7 +54,7 @@ services:
   # Elasticsearch
   # ----------------------------
   elasticsearch:
-    image: "elasticsearch:${ELASTICSEARCH_IMAGE_VERSION:-8.4.1}"
+    image: "docker.io/library/elasticsearch:${ELASTICSEARCH_IMAGE_VERSION:-8.4.1@sha256:7dd81b0af4aa916cf58373d5befaad56f89b96dd5582ced9f63879ed2650802c}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
@@ -90,7 +89,7 @@ services:
   # Redis
   # ----------------------------
   redis:
-    image: "redis:${REDIS_IMAGE_VERSION:-8}"
+    image: "docker.io/library/redis:${REDIS_IMAGE_VERSION:-8@sha256:97ec88159e6d7cfb5ddef9015386087d58a912de80112f06ebdfa78fa5989901}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
@@ -111,27 +110,6 @@ services:
       colander.service.name: redis
       colander.service.type: database
 
-  watchtower:
-    image: "nickfedor/watchtower:${WATCHTOWER_IMAGE_VERSION:-latest}"
-    restart: always
-    logging:
-      driver: "${DOCKER_LOG_DRIVER:-json-file}"
-      options:
-        labels: colander.service.name,colander.service.type
-    networks:
-      - backend
-    volumes:
-      - "/etc/timezone:/etc/timezone:ro"
-      - "${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro"
-    environment:
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_LABEL_ENABLE=true
-      - WATCHTOWER_INCLUDE_RESTARTING=true
-      - WATCHTOWER_POLL_INTERVAL=${WATCHTOWER_POLL_INTERVAL:-3600}
-    labels:
-      com.centurylinklabs.watchtower.enable: true
-      colander.service.name: watchtower
-      colander.service.type: docker
 
 volumes:
   # Volume for traefik's acme configuration files

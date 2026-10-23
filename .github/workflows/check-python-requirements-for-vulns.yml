@@ -1,0 +1,27 @@
+# Simple workflow for deploying static content to GitHub Pages
+name: Checks if there is vulnerabilities in packages listed in requirements.txt
+
+on:
+  push:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+
+jobs:
+  pip-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install
+        run: |
+          python -m venv env/
+          source env/bin/activate
+          # python -m pip install .
+      - uses: pypa/gh-action-pip-audit@v1.1.0
+        with:
+          virtual-environment: env/
+          inputs: requirements.txt

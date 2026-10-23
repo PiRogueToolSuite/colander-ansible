@@ -19,11 +19,19 @@ x-base_env: &base_env
   EMAIL_USE_SSL: ${BASE_EMAIL_USE_SSL:-False}
   LICENSE_ENABLED: ${BASE_LICENSE_ENABLED:-True}
 
-x-minio_env: &minio_env
+x-rustfs_env: &rustfs_env
   # MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
   # MINIO_ENDPOINT: "rustfs:9000"
-  MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?missing minio access key}
-  MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?missing minio secret key}
+  RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:?missing rustfs access key}
+  RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:?missing rustfs secret key}
+
+  # Those variables are here for retro-compatibility with colander:
+  # we shoud remove minio in their names
+  # (needs updating colander/config/settings/base.py)
+  # https://github.com/PiRogueToolSuite/colander/issues/79
+  MINIO_ENDPOINT: "rustfs:9000"
+  MINIO_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:?missing rustfs access key}
+  MINIO_SECRET_KEY: ${RUSTFS_SECRET_KEY:?missing rustfs secret key}
 
 x-colander_postgres_env: &colander_postgres_env
   POSTGRES_HOST: ${COLANDER_POSTGRES_POSTGRES_HOST:-colander-postgres}
@@ -35,32 +43,37 @@ x-colander_postgres_env: &colander_postgres_env
   PGUSER: ${COLANDER_POSTGRES_PGUSER:-postgres}
 
 services:
-  # ----------------------------
-  # Minio
-  # ----------------------------
-  minio:
-    image: "quay.io/minio/aistor/minio:${MINIO_IMAGE_VERSION:-RELEASE.2026-09-19T17-05-25Z.hotfix.4ef74f03d6f2}"
-    command: server /data
+  fix_permissions_to_migrate_from_minio_to_rustfs:
+    init: true
+    image: "docker.io/library/alpine:${ALPINE_IMAGE_VERSION:-3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a}"
+    user: root
+    command: sh -c 'chown -R 10001:10001 /data'
+    volumes:
+      - ${RUSTFS_VOLUME_PATH:-production_minio_data}:/data
+
+  rustfs:
+    image: "docker.io/rustfs/rustfs:${RUSTFS_IMAGE_VERSION:-1.0.3@sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688b}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
       options:
         labels: colander.service.name,colander.service.type
+    depends_on:
+      fix_permissions_to_migrate_from_minio_to_rustfs:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:9000/health"]
       interval: 30s
       timeout: 20s
       retries: 3
     networks:
       - backend
     volumes:
-      - ${MINIO_VOLUME_PATH:-production_minio_data}:/data
+      - ${RUSTFS_VOLUME_PATH:-production_minio_data}:/data # TODO we should migrate to "rustfs"
     environment:
-      <<: *minio_env
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?missing minio root username}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?missing minio root's password}
+      <<: *rustfs_env
     labels:
-      colander.service.name: minio
+      colander.service.name: rustfs
       colander.service.type: storage
 
   # ----------------------------
@@ -69,7 +82,7 @@ services:
   # Database
   colander-postgres:
     # https://github.com/PiRogueToolSuite/postgres/pkgs/container/postgres/versions
-    image: "ghcr.io/piroguetoolsuite/postgres:${COLANDER_POSTGRES_IMAGE_VERSION:-main}"
+    image: "ghcr.io/piroguetoolsuite/postgres:${COLANDER_POSTGRES_IMAGE_VERSION:-main@sha256:9b99eca028e9086de7e3339c7fac50b40393b285d3f72e50eccb5ac2bc6a6d9d}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
@@ -93,7 +106,7 @@ services:
 
   # Colander Workers
   colander-worker:
-    image: "ghcr.io/piroguetoolsuite/colander:${COLANDER_IMAGE_VERSION:-main}"
+    image: "ghcr.io/piroguetoolsuite/colander:${COLANDER_IMAGE_VERSION:-main@sha256:68fb924481712fb1ab7a24ca919cd48d941835a90d89aa34f64c8bbfb7eec42a}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
@@ -106,13 +119,13 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
-      minio:
+      rustfs:
         condition: service_healthy
       redis:
         condition: service_healthy
     command: /start-worker
     environment:
-      <<: [*base_env, *minio_env, *colander_postgres_env]
+      <<: [*base_env, *rustfs_env, *colander_postgres_env]
       DJANGO_DEBUG: ${COLANDER_DJANGO_DEBUG:-False}
       REDIS_URL: ${COLANDER_REDIS_URL:-redis://redis:6379/0}
       DJANGO_SECURE_SSL_REDIRECT: ${COLANDER_DJANGO_SECURE_SSL_REDIRECT:-True}
@@ -162,7 +175,7 @@ services:
 
 volumes:
   # Volume for minio data
-  production_minio_data:
+  production_minio_data: # TODO we should migrate to "rustfs"
 
   # Volume for colander-postgres data
   production_colander_postgres_data:

@@ -1,6 +1,5 @@
 include:
   - compose-base.yml
-  - compose-volumes.yml
 
 x-base_env: &base_env
   USE_DOCKER: True
@@ -46,7 +45,7 @@ services:
   # Database
   threatr-postgres:
     # https://github.com/PiRogueToolSuite/postgres/pkgs/container/postgres/versions
-    image: "ghcr.io/piroguetoolsuite/postgres:${THREATR_POSTGRES_IMAGE_VERSION:-main}"
+    image: "ghcr.io/piroguetoolsuite/postgres:${THREATR_POSTGRES_IMAGE_VERSION:-main@sha256:9b99eca028e9086de7e3339c7fac50b40393b285d3f72e50eccb5ac2bc6a6d9d}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
@@ -70,7 +69,7 @@ services:
 
   # Workers
   threatr-worker:
-    image: "ghcr.io/piroguetoolsuite/threatr:${THREATR_IMAGE_VERSION:-main}"
+    image: "ghcr.io/piroguetoolsuite/threatr:${THREATR_IMAGE_VERSION:-main@sha256:9dee223326f6293eb02226a33600c0d3a31494ccca4d88dc062ae4fc4a5a5a23}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
@@ -90,7 +89,6 @@ services:
       # FIXME: {{ stack.base.dot_env_file}}, {{ stack.services.threatr.dot_env_file}}, {{ stack.services.threatr_postgres.dot_env_file}}
       <<: [*base_env, *threatr_env, *threater_postgres_env]
     labels:
-      com.centurylinklabs.watchtower.enable: true
       colander.service.name: threatr-worker
       colander.service.type: worker
 

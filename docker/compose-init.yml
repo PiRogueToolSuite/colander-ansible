@@ -2,23 +2,22 @@
 
 services:
   init-env:
-    image: alpine:latest
+    image: "docker.io/library/alpine:${ALPINE_IMAGE_VERSION:-3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a}"
     init: true
     command: |
       sh -c "
       apk add pwgen
 
-      tee /.env <<EOF
+      tee /src/.env <<EOF
       # DOCKER_SOCKET_PATH=/run/user/1000/docker.sock
       COLANDER_IMAGE_VERSION=next
       COLANDER_DJANGO_SECRET_KEY=$(pwgen 40)
       THREATR_DJANGO_SECRET_KEY=$(pwgen 40)
-      MINIO_ACCESS_KEY=$(pwgen 40)
-      MINIO_SECRET_KEY=$(pwgen 40)
-      MINIO_ROOT_USER=$(pwgen 10)
-      MINIO_ROOT_PASSWORD=$(pwgen 40)
+      RUSTFS_ACCESS_KEY=$(pwgen 40)
+      RUSTFS_SECRET_KEY=$(pwgen 40)
       EOF
       chmod 0600 /src/.env
       "
+
     volumes:
       - ./:/src
