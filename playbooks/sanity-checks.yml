@@ -1,7 +1,7 @@
 ---
 - name: Check DNS records for Colander
   hosts: colander
-  gather_facts: no
+  gather_facts: false
   tasks:
     - import_role:
         name: colander
