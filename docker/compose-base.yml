@@ -1,6 +1,5 @@
 include:
   - compose-networks.yml
-  - compose-volumes.yml
 
 services:
   # ----------------------------
