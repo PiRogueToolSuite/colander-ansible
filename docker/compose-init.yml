@@ -17,6 +17,8 @@ services:
       MINIO_SECRET_KEY=$(pwgen 40)
       MINIO_ROOT_USER=$(pwgen 10)
       MINIO_ROOT_PASSWORD=$(pwgen 40)
+      EOF
+      chmod 0600 /src/.env
       "
     volumes:
-      - ./.env:/.env
+      - ./:/src
