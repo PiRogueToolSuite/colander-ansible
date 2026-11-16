@@ -24,16 +24,16 @@ colander_vault:
 
   # Domains & sub-domains
   root_domain: "{{ root_domain }}"
-  colander_base_url: "https://colander.{{ root_domain }}" 
+  colander_base_url: "https://colander.{{ root_domain }}"
   colander_django_allowed_hosts: "colander.{{ root_domain }}"
   colander_fqdn: "colander.{{ root_domain }}"
-  threatr_base_url: "https://threatr.{{ root_domain }}" 
+  threatr_base_url: "https://threatr.{{ root_domain }}"
   threatr_django_allowed_hosts: "threatr.{{ root_domain }}"
   threatr_fqdn: "threatr.{{ root_domain }}"
-  cyberchef_base_url: "https://cyberchef.{{ root_domain }}" 
+  cyberchef_base_url: "https://cyberchef.{{ root_domain }}"
   cyberchef_fqdn: "cyberchef.{{ root_domain }}"
-  traefik_base_url: "https://traefik.{{ root_domain }}" 
-  traefik_fqdn: "traefik.{{ root_domain }}" 
+  traefik_base_url: "https://traefik.{{ root_domain }}"
+  traefik_fqdn: "traefik.{{ root_domain }}"
 
   # Traefik
   traefik_auth_salt: "{{ lookup('community.general.random_string', length=22, min_lower=4, min_numeric=4, special=false) }}"

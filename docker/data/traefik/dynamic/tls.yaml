@@ -1,0 +1,11 @@
+# This fragment of traefik configuration loads
+# openssl req -new -x509 -subj "/C=FR/L=Paris/O=PTS-dev/CN=colander.local" -addext "subjectAltName=DNS:colander.local,DNS:threatr.local,DNS:cyberchef.local" -newkey rsa:2048 -keyout data/traefik/certs/key.pem -out data/traefik/certs/cert.pem -days 365 -nodes
+tls:
+  certificates:
+    - certFile: /etc/traefik/certs/self-signed/cert.pem
+      keyFile:  /etc/traefik/certs/self-signed/key.pem
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /etc/traefik/certs/default.crt
+        keyFile: /etc/traefik/certs/default.key

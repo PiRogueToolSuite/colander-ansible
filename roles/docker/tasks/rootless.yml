@@ -35,6 +35,7 @@
 
 - name: 'Install Docker rootless'
   become: false
+  # TODO: utiliser cmd arg https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/shell_module.html#parameter-cmd
   ansible.builtin.shell: dockerd-rootless-setuptool.sh install
   args:
     creates: '/home/{{ ansible_user }}/.config/systemd/user/docker.service'
