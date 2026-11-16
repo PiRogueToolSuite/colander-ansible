@@ -53,7 +53,7 @@ services:
       colander.service.type: proxy
 
   docker-socket-proxy:
-    image: "lscr.io/linuxserver/socket-proxy:latest"
+    image: "docker.io/linuxserver/socket-proxy:${SOCKET_PROXY_IMAGE_VERSION:-3.4.7@sha256:18289eeb306e8e3b70901ffec23eafbb318d73b4514d0bd737dbfc7c5b4fe506}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
