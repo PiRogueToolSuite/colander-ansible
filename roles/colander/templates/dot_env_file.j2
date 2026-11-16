@@ -46,6 +46,10 @@ DOCKER_SOCKET_PATH="{{ docker_socket_path }}"
 # https://hub.docker.com/_/traefik/tags
 TRAEFIK_IMAGE_VERSION="{{ stack.services.traefik.version }}"
 
+# Version of the OCI image for docker socket proxy
+# https://hub.docker.com/r/linuxserver/socket-proxy/tags
+SOCKET_PROXY_IMAGE_VERSION="{{ stack.services.socket_proxy.version }}"
+
 # Version of the OCI image for elasticsearch service
 # https://hub.docker.com/_/elasticsearch/tags
 ELASTICSEARCH_IMAGE_VERSION="{{ stack.services.elasticsearch.version }}"
