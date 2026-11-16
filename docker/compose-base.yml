@@ -14,7 +14,9 @@ services:
         labels: colander.service.name,colander.service.type
     networks:
       - frontend
+      - docker_socket_proxy
     environment:
+      DOCKER_HOST: "tcp://docker-socket-proxy:2375"
       TRAEFIK_DASHBOARD_FQDN: "${TRAEFIK_DASHBOARD_FQDN:-traefik.local}"
       COLANDER_FQDN: "${COLANDER_FQDN:-colander.local}"
       THREATR_FQDN: "${THREATR_FQDN:-threatr.local}"
@@ -27,7 +29,7 @@ services:
       - ${TRAEFIK_VOLUME_PATH:-production_traefik}:/etc/traefik/acme
       - ${TRAEFIK_LOGS_VOLUME_PATH:-production_traefik_logs}:/logs/
       # - ./compose/traefik/traefik.yml:/etc/traefik/traefik.yml
-      - "${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro"
+      # - "${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro"
     command:
       # following args are common to the ones defined in compose-dev.yml
       - "--log.level=${TRAEFIK_LOG_LEVEL:-ERROR}"
@@ -49,6 +51,30 @@ services:
     labels:
       colander.service.name: traefik
       colander.service.type: proxy
+
+  docker-socket-proxy:
+    image: "lscr.io/linuxserver/socket-proxy:latest"
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - docker_socket_proxy
+    environment:
+      # https://docs.linuxserver.io/images/docker-socket-proxy/#parameters
+      # https://docs.docker.com/reference/api/engine/version/v1.56/
+      - CONTAINERS=1
+      - EVENTS=1
+      - PING=1
+      - VERSION=1
+      - LIBPOD_PING=1
+      - LIBPOD_VERSION=1
+    volumes:
+      - "${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro"
+    read_only: true
+    tmpfs:
+      - /run
 
   # ----------------------------
   # Elasticsearch
