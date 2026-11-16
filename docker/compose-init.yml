@@ -6,7 +6,9 @@ services:
     init: true
     command: |
       sh -c "
-      apk add pwgen
+      apk add apache2-utils pwgen
+
+      export traefik_password=$(pwgen 40)
 
       tee /src/.env <<EOF
       # DOCKER_SOCKET_PATH=/run/user/1000/docker.sock
@@ -15,8 +17,10 @@ services:
       THREATR_DJANGO_SECRET_KEY=$(pwgen 40)
       RUSTFS_ACCESS_KEY=$(pwgen 40)
       RUSTFS_SECRET_KEY=$(pwgen 40)
+      TRAEFIK_DASHBOARD_BASIC_AUTH_USERS=\"$(htpasswd -bnBC 12 admin $$traefik_password | sed 's/\\$/\\$\\$/g')\"
       EOF
       chmod 0600 /src/.env
+      echo \"Traefik credentials: admin / $$traefik_password\"
       "
 
     volumes:
