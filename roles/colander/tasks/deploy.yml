@@ -20,3 +20,4 @@
       password: "{{ colander_vault.threatr_admin_password }}"
       email: "{{ colander_vault.admin_email }}"
       docker_service: "threatr-worker"
+  no_log: true
