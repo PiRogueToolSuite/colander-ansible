@@ -7,37 +7,16 @@
     remove_orphans: true
     pull: "always"
 
-- name: Create Colander admin user
-  community.docker.docker_compose_v2_run:
-    service: "colander-worker"
-    project_src: "{{ colander_installation_path }}/compose"
-    files: ["compose-prod.yml"]
-    command: "/entrypoint python manage.py createsuperuser --noinput --username {{ colander_vault.colander_admin_user }} --email {{ colander_vault.admin_email }}"
-    docker_host: "{{ docker_host }}"
-    remove_orphans: true
-    cleanup: true
-    env:
-      DJANGO_SUPERUSER_PASSWORD: "{{ colander_vault.colander_admin_password }}"
-  register: command_result
-  changed_when: command_result.rc == 0
-  failed_when:
-    - command_result.rc != 0
-    - "'That username is already taken' not in command_result.stderr"
-
-- name: Create Threatr admin user
-  community.docker.docker_compose_v2_run:
-    service: threatr-worker
-    project_src: "{{ colander_installation_path }}/compose"
-    files: ["compose-prod.yml"]
-    command: "/entrypoint python manage.py createsuperuser --noinput --username {{ colander_vault.threatr_admin_user }} --email {{ colander_vault.admin_email }}"
-    docker_host: "{{ docker_host }}"
-    remove_orphans: true
-    cleanup: true
-    env:
-      DJANGO_SUPERUSER_PASSWORD: "{{ colander_vault.threatr_admin_password }}"
-  register: command_result
-  changed_when: command_result.rc == 0
-  failed_when:
-    - command_result.rc != 0
-    - "'That username is already taken' not in command_result.stderr"
-  when: flavor.use_threatr
+- name: "Create admin users on colander and threatr"
+  include_tasks: "create_django_super_user.yml"
+  loop:
+    - service_name: "Colander"
+      username: "{{ colander_vault.colander_admin_user }}"
+      password: "{{ colander_vault.colander_admin_password }}"
+      email: "{{ colander_vault.admin_email }}"
+      docker_service: "colander-worker"
+    - service_name: "Threatr"
+      username: "{{ colander_vault.threatr_admin_user }}"
+      password: "{{ colander_vault.threatr_admin_password }}"
+      email: "{{ colander_vault.admin_email }}"
+      docker_service: "threatr-worker"

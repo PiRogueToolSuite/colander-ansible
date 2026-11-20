@@ -1,0 +1,34 @@
+# We do all of this to create super accounts on our tools without exposing the super user password
+# at any time of the procedure
+
+- name: "Create admin users on {{ item.service_name }}"
+  block:
+    - name: "Create a temp file to store {{ item.service_name }} superuser password"
+      ansible.builtin.tempfile:
+        state: file
+        path: "/dev/shm"
+      register: admin_password_file
+
+    - name: "Write {{ item.service_name }} superuser password in tempfile"
+      ansible.builtin.copy:
+        content: |
+          DJANGO_SUPERUSER_USERNAME={{ item.username }}
+          DJANGO_SUPERUSER_PASSWORD={{ item.password }}
+          DJANGO_SUPERUSER_EMAIL={{ item.email }}
+        dest: "{{ admin_password_file.path }}"
+        mode: "0600"
+
+    - name: "Create {{ item.service_name }} admin user"
+      ansible.builtin.command:
+        cmd: "docker compose --project-directory {{ colander_installation_path }}/compose -f {{ colander_installation_path }}/compose/compose-prod.yml run --env-from-file {{ admin_password_file.path }} {{ item.docker_service }} /entrypoint python manage.py createsuperuser --noinput"
+      register: command_result
+      changed_when: command_result.rc == 0
+      failed_when:
+        - command_result.rc != 0
+        - "'That username is already taken' not in command_result.stderr"
+  always:
+    - name: "Delete the temp file containing {{ item.service_name }} superuser password"
+      ansible.builtin.file:
+        path: "{{ admin_password_file.path }}"
+        state: absent
+  no_log: true
