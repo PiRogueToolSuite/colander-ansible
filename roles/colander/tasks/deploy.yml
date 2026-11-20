@@ -6,6 +6,7 @@
     state: present
     remove_orphans: true
     pull: "always"
+    wait: true
 
 - name: "Create admin users on colander and threatr"
   include_tasks: "create_django_super_user.yml"
