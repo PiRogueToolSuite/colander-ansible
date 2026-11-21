@@ -67,11 +67,12 @@ docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" 
 docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" up -d fix_permissions_to_migrate_from_minio_to_rustfs # changes ownership of /data to rustfs
 
 # Restore Elasticsearch
-snapshot_name=$(jq '.snapshots[0].name' ${backup_dir}/elasticsearch/index-0)
-backup_file=$(ls -t ${backup_dir}/elasticsearch/*.tgz | head -n1)
-es_volume_path="{{ stack.services.elasticsearch.volumes.data }}/snapshots/"
-rm -rf ${es_volume_path}/*
-tar xzf ${backup_file}  ${es_volume_path}/snapshots/
-docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" exec -T elasticsearch /bin/bash << EOF
-curl -s -X POST http://localhost:9200/_snapshot/snapshots/${snapshot_name}/_restore
-EOF
+backup_filepath=$(ls -t ${backup_dir}/elasticsearch/*.tgz | head -n1)
+backup_filename="${backup_filepath##*/}"
+snapshot_name=$(tar -xOf $backup_filepath index-0 | jq '.snapshots[0].name')
+docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" cp "$backup_filepath" elasticsearch:/usr/share/elasticsearch/data/
+docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" exec elasticsearch /bin/bash -c "rm -Rf /usr/share/elasticsearch/data/snapshots/* && tar xzf /usr/share/elasticsearch/data/$backup_filename -C /usr/share/elasticsearch/data/snapshots && rm -f /usr/share/elasticsearch/data/$backup_filename && curl -s -X POST http://localhost:9200/_snapshot/snapshots/${snapshot_name}/_restore"
+
+
+echo "(Re)starting all services"
+docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" up -d
