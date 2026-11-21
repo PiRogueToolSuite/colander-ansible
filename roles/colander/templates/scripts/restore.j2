@@ -4,6 +4,9 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+backup_storage_path="{{ docker_backup_path }}"
+backup_dir="${backup_storage_path}/${1}"
+
 if [[ -z ${1+x} ]]; then
     echo -e "\e[31mERROR\e[0m Backup filename is not specified yet it is a required parameter. Make sure you provide one and try again (e.g., 2025_02_20-14_53_32)."
     exit 1
@@ -13,28 +16,25 @@ if [[ ! -d "${backup_dir}" ]]; then
     exit 1
 fi
 
-backup_storage_path="{{ docker_backup_path }}"
-backup_dir="${backup_storage_path}/${1}"
-
 # Check all required backup files exist
-if [ -z "$( ls -A '${backup_dir}/colander-db' )" ]; then
+if [ -z "$( ls -A "${backup_dir}/colander-db" )" ]; then
     echo -e "\e[31mERROR\e[0m No backup found for colander-db."
     exit 1
 fi
 
 {% if flavor.use_threatr %}
-if [ -z "$( ls -A '${backup_dir}/threatr-db' )" ]; then
+if [ -z "$( ls -A "${backup_dir}/threatr-db" )" ]; then
     echo -e "\e[31mERROR\e[0m No backup found for threatr-db."
     exit 1
 fi
 {% endif %}
 
-if [ -z "$( ls -A '${backup_dir}/rustfs' )" ]; then
+if [ -z "$( ls -A "${backup_dir}/rustfs" )" ]; then
     echo -e "\e[31mERROR\e[0m No backup found for rustfs."
     exit 1
 fi
 
-if [ -z "$( ls -A '${backup_dir}/elasticsearch' )" ]; then
+if [ -z "$( ls -A "${backup_dir}/elasticsearch" )" ]; then
     echo -e "\e[31mERROR\e[0m No backup found for elasticsearch."
     exit 1
 fi
