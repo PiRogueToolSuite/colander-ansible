@@ -59,8 +59,12 @@ rm -rf ${threatr_db_volume_path}/*
 {% endif %}
 
 # Restore RustFS
-backup_file=$(ls -t ${backup_dir}/rustfs/*.tgz | head -n1)
-tar xzf ${backup_file}  "{{ stack.services.rustfs.volumes.data }}/"
+backup_filepath=$(ls -t ${backup_dir}/rustfs/*.tgz | head -n1)
+backup_filename="${backup_filepath##*/}"
+docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" cp "$backup_filepath" rustfs:/data/
+# this chown command should be kept aligned with the one in fix_permissions_to_migrate_from_minio_to_rustfs
+docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" exec --user root rustfs /bin/sh -c "rm -Rf /data/local-media/* && tar xzf /data/$backup_filename -C /data/ && rm -Rf /data/$backup_filename"
+docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" up -d fix_permissions_to_migrate_from_minio_to_rustfs # changes ownership of /data to rustfs
 
 # Restore Elasticsearch
 snapshot_name=$(jq '.snapshots[0].name' ${backup_dir}/elasticsearch/index-0)
