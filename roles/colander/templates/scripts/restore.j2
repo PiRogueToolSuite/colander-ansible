@@ -44,7 +44,7 @@ colander_db_volume_path="{{ stack.services.colander_postgres.volumes.backups }}"
 rm -rf ${colander_db_volume_path}/*
 cp ${backup_dir}/colander-db/* ${colander_db_volume_path}/
 backup_file=$(ls -t ${backup_dir}/colander-db/*.gz | head -n1)
-backup_filename=$(basename -- "${backup_file}")
+backup_filename="${backup_filepath##*/}"
 docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" run --rm colander-postgres restore ${backup_filename}
 rm -rf ${colander_db_volume_path}/*
 
@@ -53,7 +53,7 @@ threatr_db_volume_path="{{ stack.services.threatr_postgres.volumes.backups }}"
 rm -rf ${threatr_db_volume_path}/*
 cp ${backup_dir}/threatr-db/* ${threatr_db_volume_path}/
 backup_file=$(ls -t ${backup_dir}/threatr-db/*.gz | head -n1)
-backup_filename=$(basename -- "${backup_file}")
+backup_filename="${backup_filepath##*/}"
 docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" run --rm threatr-postgres restore ${backup_filename}
 rm -rf ${threatr_db_volume_path}/*
 {% endif %}
