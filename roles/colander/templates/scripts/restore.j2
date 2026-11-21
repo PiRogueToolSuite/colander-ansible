@@ -39,6 +39,10 @@ if [ -z "$( ls -A "${backup_dir}/elasticsearch" )" ]; then
     exit 1
 fi
 
+echo "Stopping all the services, restarting only colander-postgres, threatr-postgres and rustfs (we will wait thoses services are ready before going further in the restoration process)"
+docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" down
+docker compose -f "{{ colander_installation_path }}/compose/{{ compose_file }}" up --wait -d colander-postgres threatr-postgres rustfs
+
 # Restore Postgres databases
 colander_db_volume_path="{{ stack.services.colander_postgres.volumes.backups }}"
 rm -rf ${colander_db_volume_path}/*
