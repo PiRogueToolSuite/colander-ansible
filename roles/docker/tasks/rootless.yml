@@ -103,7 +103,7 @@
   ansible.builtin.lineinfile:
     path: '/home/{{ ansible_user }}/.bashrc'
     line: export path=/usr/bin:$PATH
-    create: yes
+    create: true
   when: docker_rootless
 
 - name: 'Cache the DOCKER_HOST variable'
@@ -116,5 +116,5 @@
   ansible.builtin.lineinfile:
     path: '/home/{{ ansible_user }}/.bashrc'
     line: 'export DOCKER_HOST={{ docker_host }}'
-    create: yes
+    create: true
   when: docker_rootless

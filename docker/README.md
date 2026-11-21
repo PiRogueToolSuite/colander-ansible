@@ -118,7 +118,7 @@ This will :
     - [Colander](http://localhost:5000)
     - [Threatr](http://localhost:5001)
     - [Cyberchef](http://localhost:5002)
-    - [Traefik dashboard](http://localhost:8080/)
+    - [Traefik dashboard](http://localhost:8080/) (the admin password is shown in the logs of `init-env` service)
 
 Note: those tools can also be accessed through their respectie hostnames (if you add them to your `/etc/hosts` file):
 

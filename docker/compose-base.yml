@@ -1,13 +1,12 @@
 include:
   - compose-networks.yml
-  - compose-volumes.yml
 
 services:
   # ----------------------------
   # Load balancers - Reverse proxy
   # ----------------------------
   traefik:
-    image: traefik:${TRAEFIK_IMAGE_VERSION:-v3.7}
+    image: docker.io/library/traefik:${TRAEFIK_IMAGE_VERSION:-v3.7@sha256:c8a121e4bb1347e8fd52657fab12f2cb70b68f8a018895e2068f92c9e519b9c2}
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
@@ -15,7 +14,9 @@ services:
         labels: colander.service.name,colander.service.type
     networks:
       - frontend
+      - docker_socket_proxy
     environment:
+      DOCKER_HOST: "tcp://docker-socket-proxy:2375"
       TRAEFIK_DASHBOARD_FQDN: "${TRAEFIK_DASHBOARD_FQDN:-traefik.local}"
       COLANDER_FQDN: "${COLANDER_FQDN:-colander.local}"
       THREATR_FQDN: "${THREATR_FQDN:-threatr.local}"
@@ -28,7 +29,7 @@ services:
       - ${TRAEFIK_VOLUME_PATH:-production_traefik}:/etc/traefik/acme
       - ${TRAEFIK_LOGS_VOLUME_PATH:-production_traefik_logs}:/logs/
       # - ./compose/traefik/traefik.yml:/etc/traefik/traefik.yml
-      - "${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro"
+      # - "${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro"
     command:
       # following args are common to the ones defined in compose-dev.yml
       - "--log.level=${TRAEFIK_LOG_LEVEL:-ERROR}"
@@ -51,11 +52,35 @@ services:
       colander.service.name: traefik
       colander.service.type: proxy
 
+  docker-socket-proxy:
+    image: "docker.io/linuxserver/socket-proxy:${SOCKET_PROXY_IMAGE_VERSION:-3.4.7@sha256:18289eeb306e8e3b70901ffec23eafbb318d73b4514d0bd737dbfc7c5b4fe506}"
+    restart: always
+    logging:
+      driver: "${DOCKER_LOG_DRIVER:-json-file}"
+      options:
+        labels: colander.service.name,colander.service.type
+    networks:
+      - docker_socket_proxy
+    environment:
+      # https://docs.linuxserver.io/images/docker-socket-proxy/#parameters
+      # https://docs.docker.com/reference/api/engine/version/v1.56/
+      - CONTAINERS=1
+      - EVENTS=1
+      - PING=1
+      - VERSION=1
+      - LIBPOD_PING=1
+      - LIBPOD_VERSION=1
+    volumes:
+      - "${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro"
+    read_only: true
+    tmpfs:
+      - /run
+
   # ----------------------------
   # Elasticsearch
   # ----------------------------
   elasticsearch:
-    image: "elasticsearch:${ELASTICSEARCH_IMAGE_VERSION:-8.4.1}"
+    image: "docker.io/library/elasticsearch:${ELASTICSEARCH_IMAGE_VERSION:-8.4.1@sha256:7dd81b0af4aa916cf58373d5befaad56f89b96dd5582ced9f63879ed2650802c}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
@@ -90,7 +115,7 @@ services:
   # Redis
   # ----------------------------
   redis:
-    image: "redis:${REDIS_IMAGE_VERSION:-8}"
+    image: "docker.io/library/redis:${REDIS_IMAGE_VERSION:-8@sha256:97ec88159e6d7cfb5ddef9015386087d58a912de80112f06ebdfa78fa5989901}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
@@ -111,27 +136,6 @@ services:
       colander.service.name: redis
       colander.service.type: database
 
-  watchtower:
-    image: "nickfedor/watchtower:${WATCHTOWER_IMAGE_VERSION:-latest}"
-    restart: always
-    logging:
-      driver: "${DOCKER_LOG_DRIVER:-json-file}"
-      options:
-        labels: colander.service.name,colander.service.type
-    networks:
-      - backend
-    volumes:
-      - "/etc/timezone:/etc/timezone:ro"
-      - "${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro"
-    environment:
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_LABEL_ENABLE=true
-      - WATCHTOWER_INCLUDE_RESTARTING=true
-      - WATCHTOWER_POLL_INTERVAL=${WATCHTOWER_POLL_INTERVAL:-3600}
-    labels:
-      com.centurylinklabs.watchtower.enable: true
-      colander.service.name: watchtower
-      colander.service.type: docker
 
 volumes:
   # Volume for traefik's acme configuration files

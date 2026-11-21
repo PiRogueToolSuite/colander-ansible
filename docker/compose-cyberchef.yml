@@ -5,7 +5,7 @@ services:
   # Cyberchef
   # ----------------------------
   cyberchef:
-    image: "mpepping/cyberchef:${CYBERCHEF_IMAGE_VERSION:-v11.4.0}"
+    image: "docker.io/mpepping/cyberchef:${CYBERCHEF_IMAGE_VERSION:-v11.4.0@sha256:a004ba65ac2cb4d7bfcea65a85d19208dae643b661ea9bfd21247073b61f2c93}"
     restart: always
     logging:
       driver: "${DOCKER_LOG_DRIVER:-json-file}"
@@ -16,7 +16,6 @@ services:
     ports:
       - 127.0.0.1:5003:8000
     labels:
-      com.centurylinklabs.watchtower.enable: false
       colander.service.name: cyberchef
       colander.service.type: web
       traefik.enable: "true"

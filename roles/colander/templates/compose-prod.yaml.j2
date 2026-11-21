@@ -1,0 +1,82 @@
+include:
+  - compose-base.yml
+  - compose-colander.yml
+{% if flavor.use_threatr %}
+  - compose-threatr.yml
+{% endif %}
+{% if flavor.use_mandolin %}
+  - compose-mandolin.yml
+{% endif %}
+{% if flavor.use_cyberchef %}
+  - compose-cyberchef.yml
+{% endif %}
+{% if flavor.use_playwright %}
+  - compose-playwright.yml
+{% endif %}
+
+services:
+  traefik:
+    ports: !override
+      - "${TRAEFIK_HTTP_BINDING:-0.0.0.0:80}:80"
+      - "${TRAEFIK_HTTPS_BINDING:-0.0.0.0:443}:443"
+{% if stack.services.traefik.vars.enable_dashboard | default(false) %}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.dashboard.entrypoints: "websecure"
+      traefik.http.routers.dashboard.middlewares: "compress-http,csrf,dashboard-auth"
+      traefik.http.routers.dashboard.tls.certResolver: "letsencrypt"
+      traefik.http.routers.dashboard.rule: "Host(`${TRAEFIK_DASHBOARD_FQDN:-traefik.local}`)" # && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+      traefik.http.routers.dashboard.service: "api@internal"
+      traefik.http.middlewares.dashboard-auth.basicauth.users: "${TRAEFIK_DASHBOARD_BASIC_AUTH_USERS:?missing traefik dashboard basic auth users}"
+    command:
+      # following args are common to the ones defined in compose-base.yml ;
+      # please keep them aligned on both files.
+      - "--accesslog=${TRAEFIK_ACCESSLOG_ENABLED:-true}"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=frontend"
+      - --entryPoints.web.address=:80
+      - --entryPoints.web.http.redirections.entryPoint.to=websecure
+      - --entryPoints.web.http.redirections.entryPoint.scheme=https
+      - --entryPoints.web.http.redirections.entryPoint.permanent=true
+      - --entryPoints.websecure.address=:443
+      - --entryPoints.websecure.asDefault=true
+      - "--certificatesresolvers.letsencrypt.acme.email=${TRAEFIK_CERTIFICATESRESOLVER_LETSENCRYPT_ACME_EMAIL:-letsencrypt@localhost}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+
+      # following args specific to this compose-dev.yml file
+      - "--log.level=${TRAEFIK_LOG_LEVEL:-TRACE}"
+      - "--api=${TRAEFIK_API_ENABLED:-true}"
+      - "--api.insecure=true"
+      # Attach the static configuration tls.yaml file that contains the tls configuration settings
+      #- "--providers.file.filename=/etc/traefik/dynamic/tls.yaml"
+{% endif %}
+
+  colander-front:
+    ports: !override []
+{% if flavor.use_mandolin %}
+    depends_on:
+      mandolin:
+        condition: service_healthy
+{% endif %}
+
+  colander-worker:
+{% if flavor.use_mandolin %}
+    depends_on:
+      mandolin:
+        condition: service_healthy
+{% endif %}
+
+{% if flavor.use_threatr %}
+  threatr-front:
+    ports: !override []
+{% endif %}
+
+{% if flavor.use_mandolin %}
+  mandolin:
+    ports: !override []
+{% endif %}
+{% if flavor.use_cyberchef %}
+  cyberchef:
+    ports: !override []
+{% endif %}
